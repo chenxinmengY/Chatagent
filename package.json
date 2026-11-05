@@ -1,0 +1,20 @@
+{
+  "name": "chatagent-local",
+  "version": "0.4.4",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "start:bridge": "node scripts/start-bridge.mjs",
+    "start:standby": "node scripts/start-standby.mjs",
+    "build:android": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1",
+    "build:desktop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-desktop.ps1",
+    "start": "node apps/service/server.mjs",
+    "start:workspace": "node scripts/start-workspace.mjs",
+    "prepare:source": "node scripts/prepare-source.mjs"
+  },
+  "license": "MIT"
+}

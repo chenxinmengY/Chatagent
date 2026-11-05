@@ -1,0 +1,6 @@
+{
+  "dataRoot": "C:/Chatagent/private/client",
+  "port": 37824,
+  "bridgeUrl": "http://127.0.0.1:37827",
+  "tokenFile": "C:/Chatagent/private/bridge-token.txt"
+}

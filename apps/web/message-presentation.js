@@ -1,0 +1,3 @@
+export const hiddenVoiceNotice = row => row.device === 'plugin-delivery' && /^(asr-start-|asr-text-)/.test(row.client_id ?? '');
+export const voiceDelivery = row => row.device === 'plugin-delivery' && /^voice-[a-f0-9]{40}-\d+$/.test(row.client_id ?? '') && row.attachments?.some(file => file.mediaType?.startsWith('audio/'));
+export const displayedText = row => voiceDelivery(row) || row.device === 'plugin-delivery' && /^[a-f0-9]{64}$/.test(row.client_id ?? '') && ['整首翻唱（电脑已保存）','翻唱片段（电脑已保存）'].includes(row.text) && row.attachments?.some(file => file.mediaType?.startsWith('audio/')) ? '' : row.text;

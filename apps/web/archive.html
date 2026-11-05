@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>小鲸鱼 · 档案</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/desktop.css"></head>
+<body><aside></aside><main class="archive-page">
+<header><div><p class="breadcrumb">Chatagent / 私人收藏</p><h1 id="archive-title">小鲸鱼的档案</h1><p id="archive-intro">保存在这台电脑上的独立资料副本。</p></div><span id="status" class="private-pill" role="status">正在读取…</span></header>
+<section class="archive-workspace">
+<div class="archive-toolbar"><label class="archive-kind">查看 <select id="kind"><option value="memories">记忆</option><option value="history">聊天原文</option><option value="diaries">鱼的小本本</option><option value="bili-legacy">导入的 B 站历史</option><option value="bili">备用端 B 站记录</option></select></label><span class="archive-scope">独立副本 · 自动任务暂停</span><button id="refresh" class="soft-button">↻ 刷新记录</button></div>
+<p id="reading-note" class="reading-note" hidden>这里保存她当时留下的感受。导入历史与备用端记录分开查看；仅有文字记录不代表看完视频或听过原始音频。</p>
+<div id="date-tools" class="date-tools" hidden><label>查看日期 · 北京时间<input id="date-input" type="date" aria-label="查看日期"></label><button id="calendar-button" class="soft-button" aria-controls="calendar" aria-expanded="false">▦ 日历</button><label class="record-dates-label">有记录的日期<select id="record-dates" aria-label="有记录的日期"></select></label><button id="today" class="soft-button">今天</button></div>
+<section id="calendar" class="archive-calendar" aria-label="日期日历" hidden><div class="calendar-heading"><button id="month-back" class="soft-button" aria-label="上个月">‹</button><strong id="month-label"></strong><button id="month-next" class="soft-button" aria-label="下个月">›</button><button id="calendar-close" class="soft-button" aria-label="关闭日历">×</button></div><div class="calendar-week" aria-hidden="true"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div><div id="calendar-days" class="calendar-days"></div><p>蓝点表示这一天有保存的记录</p></section>
+<div id="date-heading" class="date-heading" hidden><h2 id="selected-date-title"></h2><span id="selected-date-count" aria-live="polite"></span></div>
+<p id="loading" role="status"></p><p id="error" role="alert"></p><div id="entries"></div><button id="more" class="soft-button" hidden>加载更多</button>
+<details class="archive-source"><summary>资料与能力状态</summary><p>这里只查看已保存的资料，不会恢复旧任务。当前功能连接状态见下方。</p><p id="summary"></p><p id="plugins"></p><p id="capabilities"></p><button id="cancel-capabilities" hidden>停止当前音频与阅读任务</button></details>
+</section></main><script type="module" src="/archive.js"></script><script type="module" src="/shell.js"></script></body></html>

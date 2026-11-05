@@ -1,0 +1,11 @@
+#messages,#appearance-preview{background:var(--chat-background,#f5f7fb)}.bubble{font-size:var(--chat-font,15px)!important;border-radius:var(--chat-radius,14px)!important}.voice-bar{border-radius:var(--chat-radius,14px)!important}.user-preview{margin-left:auto;background:var(--blue);color:white}#appearance-preview{padding:20px;border:1px solid var(--border);margin:12px 0}.history-tools{display:flex;gap:6px;flex-wrap:wrap;padding-top:8px}.history-tools input{font:inherit;min-width:0;max-width:170px}.history-tools button{padding:5px 9px;font-size:12px}.management-card pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto}
+
+#appearance-fields,#memory-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}#appearance-fields input[type=color]{width:80px;height:40px;padding:3px}.management-field select{width:100%}@media(max-width:700px){#appearance-fields,#memory-fields{grid-template-columns:1fr}}
+
+.user .bubble,#appearance-preview .user-preview{background:var(--user-bubble,#e4efff);color:#28466f;border-color:var(--user-bubble,#dce9ff)}
+.hub-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:14px 0;border-bottom:1px solid var(--border);margin-bottom:12px}.hub-tabs a{padding:8px 12px;border-radius:8px;text-decoration:none;font-size:12px;color:#667e9c}.hub-tabs a.selected{background:#e7efff;color:var(--blue);font-weight:600}body[data-hub] .archive-page{grid-template-rows:auto auto minmax(0,1fr)}body[data-hub=settings] .management-tabs{display:none}[hidden]{display:none!important}#memory-list article{padding:12px 0;border-bottom:1px solid var(--border);font-size:13px}#memory-list details{font-size:11px;color:var(--muted)}
+
+.hub-tabs{flex-shrink:0}.hub-tabs+section{min-height:0}#workspace-backup{margin-right:14px}
+.migration-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}.migration-grid .management-field{margin:12px 0}.management-card h3{font-size:14px;margin:22px 0 8px}.capability-detail{padding:10px 0;border-bottom:1px solid var(--border)}.capability-detail h3{margin:0 0 7px}.capability-detail p{font-size:12px;line-height:1.8;color:#8197b2;margin:0}#fish-source{width:100%;max-width:600px}#fish-empty:empty{display:none}@media(max-width:700px){.migration-grid{grid-template-columns:1fr}}
+
+.appearance-actions{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px}

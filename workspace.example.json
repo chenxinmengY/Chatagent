@@ -1,0 +1,8 @@
+{
+  "dataRoot": "D:\\ChatagentData\\personal",
+  "sdkRoot": "D:\\DSH\\resources\\app\\dsh\\node_modules\\@deepseek-ai",
+  "fishRoot": "D:\\Plugins\\dsh-fish-memory",
+  "port": 37825,
+  "allowNetwork": false,
+  "persona": "你是一位友善的中文助手。"
+}

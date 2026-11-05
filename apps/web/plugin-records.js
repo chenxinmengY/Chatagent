@@ -1,0 +1,5 @@
+export const beijingDay=value=>{if(value==null||value==='')return '';const d=new Date(value);return Number.isFinite(d.getTime())?new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(d):'';};
+export function recordDay(row){return /^\d{4}-\d{2}-\d{2}$/.test(row.date??'')?row.date:beijingDay(row.at??row.createdAt)||'日期不详';}
+export function orderedRecords(data){return [...data.records,...data.imported].sort((a,b)=>recordDay(b).localeCompare(recordDay(a))||(Number(new Date(b.at??b.createdAt??0))-Number(new Date(a.at??a.createdAt??0))));}
+export function dateCounts(rows){const counts=new Map();for(const row of rows){const day=recordDay(row);counts.set(day,(counts.get(day)??0)+1);}return [...counts].sort(([a],[b])=>b.localeCompare(a));}
+export function videoGroups(rows){const groups=new Map();for(const row of rows){const key=/^BV[A-Za-z0-9]{10}$/.test(row.bvid??'')?row.bvid:row.id;if(!groups.has(key))groups.set(key,{key,bvid:row.bvid,title:row.title??'视频记录',rows:[]});groups.get(key).rows.push(row);}return [...groups.values()];}

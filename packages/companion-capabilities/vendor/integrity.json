@@ -1,0 +1,92 @@
+[
+  {
+    "file": "singing/service.mjs",
+    "source": "wechat-singing/service.mjs",
+    "sha256": "273a6b6eadf9b9e01fe7fa7e9149f93be1afe4121f2373bdde91def6efb4535b"
+  },
+  {
+    "file": "singing/common.mjs",
+    "source": "wechat-singing/common.mjs",
+    "sha256": "c710f48c6559d551c0ecfe93d7838d27c3de003701018ee6a7f8194f43a2ebf2"
+  },
+  {
+    "file": "singing/intent.mjs",
+    "source": "wechat-singing/intent.mjs",
+    "sha256": "9daea9807d3ab178c3b85e613c36bd7a27d768e648345f9bb41f63ee430cd805"
+  },
+  {
+    "file": "singing/mp3.mjs",
+    "source": "wechat-singing/mp3.mjs",
+    "sha256": "8572f0f1e37d520a35cfc7c177378364f45d0f1e30a28b984df80b366e1f333c"
+  },
+  {
+    "file": "bili/manual-trigger.mjs",
+    "source": "cyberwife-bili-visual-v1/prototype/manual-trigger.mjs",
+    "sha256": "d6276bc7486834a28cf3ffb99d2ab60a49ce0e16e8e3c02c6ab7dc7458d68ca1"
+  },
+  {
+    "file": "bili/reading.mjs",
+    "source": "cyberwife-bili-visual-v1/prototype/reading.mjs",
+    "sha256": "2e3bc2285a532a2bba7c8543dac65db7a4fb5356ca994caa0f8c623c4c6bb710"
+  },
+  {
+    "file": "bili/archive.mjs",
+    "source": "cyberwife-bili-visual-v1/prototype/archive.mjs",
+    "sha256": "9abcad9ffbb82ab7f03881f413fb2c595701a39eb0a5021b494a1200c9d180b9"
+  },
+  {
+    "file": "voice-intent.mjs",
+    "source": "wechat_voice_bridge/voice_intent.mjs (pure exports; production worker removed)",
+    "sha256": "8055a8442492b9a46d4e923b468aedb995acc7216a23c41d2bf7d2d4047325bd"
+  },
+  {
+    "file": "silk-wasm/LICENSE",
+    "source": "silk-wasm 3.7.1 MIT (copied from sealed archive)",
+    "sha256": "3b1585c0e6d9d501e86383948fc0d1734bcb86517a13111d97749c65ad2bfb74"
+  },
+  {
+    "file": "silk-wasm/package.json",
+    "source": "silk-wasm 3.7.1 MIT (copied from sealed archive)",
+    "sha256": "55f69255696623a29fee616525eab2b9f7aab9f21adf9b667155b68b653410d5"
+  },
+  {
+    "file": "silk-wasm/lib/index.mjs",
+    "source": "silk-wasm 3.7.1 MIT (copied from sealed archive)",
+    "sha256": "1a95755169e70de059b47a7e7d81a2c3e4f0f0d2ac8d26a8d1d90eaeaac4f937"
+  },
+  {
+    "file": "silk-wasm/lib/silk.wasm",
+    "source": "silk-wasm 3.7.1 MIT (copied from sealed archive)",
+    "sha256": "88152af59af535b8056ac806710824b2259a361027451b494f175f48fb39c807"
+  },
+  {
+    "file": "singing/worker-client.mjs",
+    "source": "wechat-singing/worker-client.mjs",
+    "sha256": "3c946e524ee6f2570d4b045ea4bdf516d8bdb2b135ef9836cca09c2e31882db0"
+  },
+  {
+    "file": "singing/owned-worker-launch.py",
+    "source": "wechat-singing/owned-worker-launch.py",
+    "sha256": "56a5276c7fa208c56fb34f31504f949e744e2512477f72e66b02528c6448618e"
+  },
+  {
+    "file": "singing/owner-exit.mjs",
+    "source": "wechat-singing/owner-exit.mjs",
+    "sha256": "ae29b2d36db9521753486bef2efa4fae9c52be849f2ee096b80ff151bb450ea1"
+  },
+  {
+    "file": "singing/source.mjs",
+    "source": "wechat-singing/source.mjs",
+    "sha256": "8d960cad6e254f01009b103b90e0e86a6e676ed42e62ea530e8abe551edcf52b"
+  },
+  {
+    "file": "singing/source_download.py",
+    "source": "wechat-singing/source_download.py",
+    "sha256": "a339eb931254f08d5285ebdf815aca3ec522440807ac65085a5a64acc1208e68"
+  },
+  {
+    "file": "singing/anonymous-audio-download.py",
+    "source": "wechat-music/source-download.py",
+    "sha256": "59d6012fef76d7396b5dc5d6c7264420d04934e2ac034e65f22c684032aa70b4"
+  }
+]

@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import path from 'node:path';
+import {ChatStore} from '../packages/conversation/store.mjs';import {Preferences} from '../packages/conversation/preferences.mjs';import {sandbox} from './helpers.mjs';
+test('capability configuration persists with revision protection and rejects invalid field values',t=>{
+ const box=sandbox(t),file=path.join(box.root,'chat.sqlite');let store=new ChatStore(file),prefs=new Preferences(store),initial=prefs.read();
+ try{const next=structuredClone(initial);next.capabilities=[{id:'synthetic',name:'合成能力',description:'配置测试',fields:[{key:'enabled',label:'启用',type:'boolean'}],values:{enabled:false}}];next.policy.disabledTools=['synthetic_tool'];prefs.save(next);assert.throws(()=>prefs.save(initial),/PREFERENCES_CHANGED/);store.close();store=new ChatStore(file);prefs=new Preferences(store);assert.equal(prefs.read().capabilities[0].values.enabled,false);assert.deepEqual(prefs.forMode('social').disabledTools,['synthetic_tool']);const invalid=prefs.read();invalid.capabilities[0].values.enabled='wrong';assert.throws(()=>prefs.save(invalid),/INVALID_CAPABILITIES/);assert.equal(prefs.read().capabilities[0].values.enabled,false);}finally{store.close();}
+});
