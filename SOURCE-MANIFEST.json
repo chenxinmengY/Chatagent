@@ -1,18 +1,18 @@
 {
   "format": "chatagent-source-candidate-v1",
-  "version": "0.4.4",
+  "version": "0.4.9",
   "license": "MIT",
   "publication": "source-snapshot",
   "files": [
     {
       "path": ".gitignore",
-      "bytes": 312,
-      "sha256": "249c20f22cd6666e297cf93ac5364c37eeef1f983bb3c6fcce7b15ee23f3e7c3"
+      "bytes": 567,
+      "sha256": "dabec6181af0992ef400dc2e6d16e37768b40116bdd2e7d631918102cc22960d"
     },
     {
       "path": "apps/android/AndroidManifest.xml",
-      "bytes": 1893,
-      "sha256": "6520e8f85aadca3dbf5223bb578d67d83b51abc44a9ebba4d9e1b22457058fc5"
+      "bytes": 2092,
+      "sha256": "98f314f0a96c712301692d2d3bae765177f06ae573578da233df7f8ca3935ba8"
     },
     {
       "path": "apps/android/assets/regions-LICENSE.txt",
@@ -30,6 +30,11 @@
       "sha256": "56c2ae215e8d90211d889023e9533cdc8d0ccf958f6a876359872760ca8fa947"
     },
     {
+      "path": "apps/android/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "bytes": 257,
+      "sha256": "76d34c531dc8e814d989e75a80ed84bac6e24b630a96b223abf451c2200ec6b3"
+    },
+    {
       "path": "apps/android/res/values/styles.xml",
       "bytes": 542,
       "sha256": "3c8df9eeb63c325ba4b8b0cfd81279c3de75a7414a9b6a5a3a20992f9b048b85"
@@ -41,8 +46,13 @@
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/Appearance.java",
-      "bytes": 4099,
-      "sha256": "97b8e5abfed04100592a89f7679b3c5230ed6ef7ae58c7ac006700a2ec2bc878"
+      "bytes": 6979,
+      "sha256": "9f4a571b2e5acdc8a67215e3d059279872fb5960867dfdfb4634ebb211b21254"
+    },
+    {
+      "path": "apps/android/src/local/chatagent/privatechat/AttachmentSelection.java",
+      "bytes": 792,
+      "sha256": "06fff2bc40fa8ef8b654f3fbcdccebea3dee5e725b16196d64fa294cf7f27e84"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/AudioPlayer.java",
@@ -50,9 +60,19 @@
       "sha256": "d2500b51659928139c6fe99089ef54a3a341c8243999b80b6dcfc2c4e2dd669c"
     },
     {
+      "path": "apps/android/src/local/chatagent/privatechat/AutoStartSettings.java",
+      "bytes": 1026,
+      "sha256": "eef89d9d6c019889d86c9c1d48ce455116af08ba48555b89f61ee16cee16e8de"
+    },
+    {
+      "path": "apps/android/src/local/chatagent/privatechat/BackgroundDiagnostics.java",
+      "bytes": 3700,
+      "sha256": "b185e3045c885a741bb2937557150c49fc43bcbed6bff46c3a468f179b6f907b"
+    },
+    {
       "path": "apps/android/src/local/chatagent/privatechat/BootReceiver.java",
-      "bytes": 560,
-      "sha256": "8ff2c318651c179581ee03073ca4c65787ff06acb0ca0bc5344870b302efb9c3"
+      "bytes": 869,
+      "sha256": "ae233e8aa169b30c2c25a6a472b4cdda083ed17da03954293f91c68abf35246f"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/BubbleArrival.java",
@@ -61,18 +81,23 @@
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/ChatApplication.java",
-      "bytes": 949,
-      "sha256": "d40fe6dd9d93e57f84881eaf754df3a8bae32f6f94a46f07eeb251fe26356ee7"
+      "bytes": 997,
+      "sha256": "fcf4aeb79a83a0deb21c563c7378a53513724c0234ac69423dc863288b3c6770"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/ComposerIcon.java",
-      "bytes": 1207,
-      "sha256": "62c3c1f262b396d69cb36a57332dcf0bc109f56f10d0f6ff8a708ec97281634c"
+      "bytes": 1806,
+      "sha256": "b5add921559b5ad7780fc7f43c08fa4992169d22d0202f66a650a6e913f652a5"
+    },
+    {
+      "path": "apps/android/src/local/chatagent/privatechat/ConnectionRecovery.java",
+      "bytes": 1937,
+      "sha256": "cb7e8d3ae9d676098594c3d1077a9d3cca997b143664a389625efe8573c18ec6"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/Files.java",
-      "bytes": 2265,
-      "sha256": "aa82c4be6e7de1d1bc0c6737f7671ad6e0a75428e6077ac5a7424841ca8c795e"
+      "bytes": 2372,
+      "sha256": "eeee154c53ecb3a7a3cbf5ae2cc0e155279ff9a1323606c63266a13c3c435861"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/HoldToTalk.java",
@@ -81,13 +106,13 @@
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/LocalStore.java",
-      "bytes": 7511,
-      "sha256": "48a6aacf9a5e02afa32848e890436b5814c9c4eabb5367e5d5c21f48fb03c43b"
+      "bytes": 8299,
+      "sha256": "2221e5bc23a43315416c294548bf21c78933825d84d0cb09b2410622d4fb0c28"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/MainActivity.java",
-      "bytes": 51234,
-      "sha256": "41619673e64d16b9c9dea76ffe159946c6c1c0d05c3920a3f281a9151acf9596"
+      "bytes": 69625,
+      "sha256": "b092cd574f3fbe11cd2fc04f12f7695ad203b38b4ebbcc8a982258cf7cda9659"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/MediaCache.java",
@@ -96,23 +121,28 @@
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/MessageNotifications.java",
-      "bytes": 1504,
-      "sha256": "299a81eafacbd9bc653dc7205b36b21da8c417b838c60405d48edb06636682d0"
+      "bytes": 3510,
+      "sha256": "80f9a84caefd138654c8299e714ebddcd8be7b5f5ab880a99627dc7166f5b4ba"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/MessagePresentation.java",
-      "bytes": 1163,
-      "sha256": "7e9c7364837297e785404ca5055a74329e4c0272a54e5ab47552eeb886f94fe6"
+      "bytes": 1448,
+      "sha256": "9faf7ef203f6ba7fdf00c685deb35ade89965e5cd5b56042b53d7c71014ab99c"
+    },
+    {
+      "path": "apps/android/src/local/chatagent/privatechat/NotificationProbe.java",
+      "bytes": 2417,
+      "sha256": "5cad238e9b9d5b4aa4e67082b158ddb17107416d88ab7f54c57265e8bde206be"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/PhotoPicker.java",
-      "bytes": 849,
-      "sha256": "6cef98ebadebc35318dd556cf76a35927d107ed6bba555f47297bd60636c6b9c"
+      "bytes": 1834,
+      "sha256": "c8d9036257cf7b09162f2486768ec39091b86496942db07eaf30ddbf162311f6"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/PinnedScrollView.java",
-      "bytes": 1555,
-      "sha256": "b295a42f1478901ca869502bea59c1a04c6b46b849776d2a70999b57f4141def"
+      "bytes": 2263,
+      "sha256": "44d3fb6ac6f809600c7cee051b972fb0dcb0cae9af7217d7a18e75478335cdcf"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/ProfileActivity.java",
@@ -121,8 +151,8 @@
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/ProfileData.java",
-      "bytes": 2532,
-      "sha256": "b26daf7159c47e91a3053978505f1a365399d71306080e554aad42ed1269476c"
+      "bytes": 2942,
+      "sha256": "d828fef11a1ebc13982ff671a43e35dc46b21d02f02e876b30d7f9e9ab7a74f6"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/QueuePolicy.java",
@@ -140,9 +170,24 @@
       "sha256": "5e818ccb217c4bafbed974d48f4845543681d20c65333fd8dc1c867dcdbe4fc6"
     },
     {
+      "path": "apps/android/src/local/chatagent/privatechat/StickerImages.java",
+      "bytes": 1134,
+      "sha256": "7974c2c3606f03aca6c1f3aa6c9b68f618424b64090dbbe86bab4daac217fcf4"
+    },
+    {
+      "path": "apps/android/src/local/chatagent/privatechat/StickersDialog.java",
+      "bytes": 7289,
+      "sha256": "1234238043eee37e4bb47ca0b68e89e3c8c0ccdd695f58939cc0a7c2c56e0411"
+    },
+    {
       "path": "apps/android/src/local/chatagent/privatechat/SyncService.java",
-      "bytes": 10639,
-      "sha256": "37585a654451d185d0661fb614cf9dd152cb1bdedde5fc3e807dbfe2a1a90198"
+      "bytes": 11998,
+      "sha256": "b2dd52562d1525aa654681e2fe854392e00908d06aed5a691449faa6a94057e5"
+    },
+    {
+      "path": "apps/android/src/local/chatagent/privatechat/TimelineViews.java",
+      "bytes": 1354,
+      "sha256": "e261607cde560fbdf8315c2ef2fd7d24bd1e57d3f97c71d1696085ec96f97e09"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/UnreadMessages.java",
@@ -151,8 +196,8 @@
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/VoiceBar.java",
-      "bytes": 5759,
-      "sha256": "05b8c2acfa8e3a381f04b972efbf7c5bb7cd13a4457e3b3638b1c32578a38493"
+      "bytes": 5840,
+      "sha256": "ce0cfa23fa65ebd65681e04684c2a8c814bcc546b55a0d3db7c1120a5a45e948"
     },
     {
       "path": "apps/android/src/local/chatagent/privatechat/VoiceRecorder.java",
@@ -165,39 +210,54 @@
       "sha256": "f7b4dc5f34da83cd17698c8ebb0d57751753d6aff531b7e9016c9b2074cf68df"
     },
     {
+      "path": "apps/branding/app-icon.png",
+      "bytes": 1832099,
+      "sha256": "4b277e954379272cccbdfeea201f948a391598c6b70d94b4fb420e9461324df4"
+    },
+    {
       "path": "apps/desktop/bootstrap.ps1",
-      "bytes": 2636,
-      "sha256": "f233489c33c3b52ca30d2b9ab7129596b48ff4a4716e1fee207bbd1c345891d3"
+      "bytes": 2932,
+      "sha256": "d7850b8496029dc23398ed657a3938eebbb9485009f39c5f78a0c97198ef5fdd"
     },
     {
       "path": "apps/desktop/Chatagent.cs",
-      "bytes": 8340,
-      "sha256": "c35a0aa62f2004840567e426916047a99b9d8f9c753fc97be1449fef0eafe4fc"
+      "bytes": 13155,
+      "sha256": "db2692d00f65790102f654f55753e52596fb5545535af06be7154b2309a4b551"
+    },
+    {
+      "path": "apps/desktop/installed-bootstrap.ps1",
+      "bytes": 6930,
+      "sha256": "94b3ccb2ea700ba73e6cc886b8584de53d0ab8067005090a46e2213d43af9ec7"
+    },
+    {
+      "path": "apps/desktop/installed-server.mjs",
+      "bytes": 2570,
+      "sha256": "1f4b35bc4de5addd8dea3968d99fbcabc1009ea4383b7db4450a9dc31111edf8"
     },
     {
       "path": "apps/service/server.mjs",
-      "bytes": 44926,
-      "sha256": "7678069d3a390c5234c301607b87f4651a9b6a73ba8c3e7220625a49a918219c"
+      "bytes": 61796,
+      "sha256": "cb639a0699ec561c238dabaf2ab967457cb1e243496a230451751194804222b7"
     },
     {
       "path": "apps/web/app.js",
-      "bytes": 36448,
-      "sha256": "8e069bf67ffac9976136070f4555e42892b2f9f270c75f4f36421b7088e50e2c"
+      "bytes": 40317,
+      "sha256": "7f04f6abf91d5ec72c258b95d82aa997febc9e65ff834a575342d2faff0eaa9e"
     },
     {
       "path": "apps/web/appearance.js",
-      "bytes": 1192,
-      "sha256": "0191470444c0510c418386e0f9b0916d9fb179b667813026b3b079cfd4bf831e"
+      "bytes": 1650,
+      "sha256": "982ff205a3ca585cbc9e21a3a883bf0a615820e1c2a850c6640a38d306ae9a4b"
     },
     {
       "path": "apps/web/archive.html",
-      "bytes": 3186,
-      "sha256": "19997ceedf69ac75f16fe07ecc422e33800756b189bed5eeb9568f905e5124ea"
+      "bytes": 3192,
+      "sha256": "0c54799cebbbcbe58a137bc2e13c0031ee6d7775b3199f64f1a86e17fc929be1"
     },
     {
       "path": "apps/web/archive.js",
-      "bytes": 15116,
-      "sha256": "b3fc6a29abb8883717063252f408ee95053d68c0f2b66fd6f1ce14b5147dbea5"
+      "bytes": 15119,
+      "sha256": "d71b11806664f835a54042bbb10e7d415c3ba2a09087e3c7ffb7fea23f2d0b23"
     },
     {
       "path": "apps/web/bubble-arrival.js",
@@ -206,8 +266,8 @@
     },
     {
       "path": "apps/web/capability-cards.js",
-      "bytes": 3793,
-      "sha256": "d7ab6c8c87d22c7e41f4ae4d495d56fc85d729abfa17a25f86f7d0090c1a7113"
+      "bytes": 3796,
+      "sha256": "adc1f762454a1fb2d38cfa912aeb88819169578eb16c60f624e41427ea0d2e07"
     },
     {
       "path": "apps/web/chat-scope.js",
@@ -221,28 +281,28 @@
     },
     {
       "path": "apps/web/chat-settings.js",
-      "bytes": 11855,
-      "sha256": "e629748afe8c07130854eacf8aee3e1a0e37cf1d6097e4ad10f34130d55f0c47"
+      "bytes": 12196,
+      "sha256": "f73e6c093c0273089c1dbe432715f83e3ee314f34de1f6884b021d7945a0f64e"
     },
     {
       "path": "apps/web/chats.css",
-      "bytes": 3082,
-      "sha256": "c8c1cd1a4d1386d12a68d4be2b2327c428903f1eb32d4ef3968cf7597ad164a7"
+      "bytes": 3899,
+      "sha256": "88d573290a2260cf0cc0736a6f86e4022b91c55fad47eb79349c06ef81b5e407"
     },
     {
       "path": "apps/web/chats.html",
-      "bytes": 2511,
-      "sha256": "935f060a6e837d87cdc036cfae0192bd5a0e3ae947f339f76f20bab760f6d4d5"
+      "bytes": 3468,
+      "sha256": "ad59b5f293132db39d88c1af70ce432f22726917fb3360a4425aa732c42f53b0"
     },
     {
       "path": "apps/web/chats.js",
-      "bytes": 5587,
-      "sha256": "49790fedddbb9f8c590970065ebdda70d5d52b63ba281627ea9015c559de4532"
+      "bytes": 7519,
+      "sha256": "abdfa2eceaba39b4b1d3508dacb74d17a2b3b829782fd87bee3b68bc75fb8d16"
     },
     {
       "path": "apps/web/course.html",
-      "bytes": 3040,
-      "sha256": "788294ccacdb55eb7f1b954580723cd8e323fb83db0120983ace1f09ae9041a9"
+      "bytes": 3046,
+      "sha256": "f030bb141fb6edc8c235c33148aae38433def4406abc995a92f4d1f92c57df3b"
     },
     {
       "path": "apps/web/course.js",
@@ -251,28 +311,28 @@
     },
     {
       "path": "apps/web/customize.css",
-      "bytes": 2379,
-      "sha256": "8fd1c76f86eb8880b9f418672542e2b8c451e40eefd1df4a23fe5a3a4baa3835"
+      "bytes": 3908,
+      "sha256": "2235dd1461014601f060fcaad38c164ab2e256eccc436c526ee2b9df4d8b74d2"
     },
     {
       "path": "apps/web/customize.html",
-      "bytes": 3260,
-      "sha256": "0942b28379cedbd5582a57e04687c4a94681eff856ad144eed0765266ccd9daf"
+      "bytes": 4873,
+      "sha256": "824d0f6671712b8b0cb9d99ab38bf251de3a5514a0d87fe28147e3a47d5e8a62"
     },
     {
       "path": "apps/web/customize.js",
-      "bytes": 5917,
-      "sha256": "20eb811323a6e074f9eda4601e63a867ee605cf606bb7de8e27c0eecd0255f74"
+      "bytes": 7462,
+      "sha256": "675d0725a6f1612eb01eb84a874ba3e72b6bd1eb957459004c36cd3f2b2dae27"
     },
     {
       "path": "apps/web/desktop.css",
-      "bytes": 17041,
-      "sha256": "3f6b3c3d1c2f27cfa66f7571022dc0e4352eab6133e0353e4babb50b7d47f2de"
+      "bytes": 23288,
+      "sha256": "40ef96b30250108f662808a662d6be1c4a91f5bb68452436b64c64f4c4fc8475"
     },
     {
       "path": "apps/web/devices.html",
-      "bytes": 1612,
-      "sha256": "1c613f2f95b51eae5b87c4439798d8f983e15c7fcf58e435992d6306f8e9ef40"
+      "bytes": 1615,
+      "sha256": "101d014cc6812ebd6f5c5a9edf947fe996d460d556c5f9eab13095eb20660a33"
     },
     {
       "path": "apps/web/devices.js",
@@ -280,34 +340,49 @@
       "sha256": "ad7e96de34765fb22c6cbc723ac50e547392c883332702372ae705facd2bca11"
     },
     {
+      "path": "apps/web/image-attachments.js",
+      "bytes": 3159,
+      "sha256": "083dc9726243a5f252bd1c37b3997c6b0bbcbeb0a2c85131d0ecf20f647d30f7"
+    },
+    {
       "path": "apps/web/index.html",
-      "bytes": 3372,
-      "sha256": "7348c467de5ae344dd8b22c81b27bae76f6abbe48f24d678f6f68704e1b448c7"
+      "bytes": 4148,
+      "sha256": "79c42e3a76d6a7e66aaf7f31f02971ef01c42b38b876885bf71883d6ecac38ae"
+    },
+    {
+      "path": "apps/web/installed-start.html",
+      "bytes": 2584,
+      "sha256": "db8521bcb2ba9caf139111d9f1a4c128a4f4417ee8f8898b1da45b294eaf602f"
     },
     {
       "path": "apps/web/manage.css",
-      "bytes": 3317,
-      "sha256": "d1fafe9d705ebf154bec60b13d2ce8b9d4df5c4e82d432107ab35046f3dac9c7"
+      "bytes": 4541,
+      "sha256": "fc4caea4d3f702003c736ac4e35c4dcb466af05a68104bd24e6c240c25c47020"
     },
     {
       "path": "apps/web/manage.html",
-      "bytes": 1009,
-      "sha256": "a45fae57987d7f4d0fd3b704b8ce5b0114de17e3ea43b28b5329e5835b6855b6"
+      "bytes": 1694,
+      "sha256": "1f72ca8b43e7809fb85a4af84d8ca879dbc7c045eeebad646241ff95c467962e"
     },
     {
       "path": "apps/web/manage.js",
-      "bytes": 16026,
-      "sha256": "a88b6f924849120209830b18c3e46f28e840faf1e12b0af65a2825704a580b19"
+      "bytes": 17128,
+      "sha256": "eb5615d38d850c1a9ade954f535ccdc690430370b507a94360c3bcefa4d51ff6"
+    },
+    {
+      "path": "apps/web/media-connections.js",
+      "bytes": 6110,
+      "sha256": "eb444e484f7813d33ef81786d7c00a6c9427b3c692026c09d09697b29b4e60d9"
     },
     {
       "path": "apps/web/message-presentation.js",
-      "bytes": 647,
-      "sha256": "91cc5d40e29f76559edba15091e5e2d32203ad41b14d3969b9093bb345c9ba92"
+      "bytes": 1072,
+      "sha256": "474bde510e2ca22969313177d1188c93d64725d6dbd29602c3ccba0835b11a0c"
     },
     {
       "path": "apps/web/models.html",
-      "bytes": 1061,
-      "sha256": "90cbd3bac10b14815486a9bdb51033cc0e5777bb5aa55344f3be2e48aead1cca"
+      "bytes": 1164,
+      "sha256": "37a77b4ea90e1f77ec00cfff3112ec289e75d9676ac90dd174bde735f59d50de"
     },
     {
       "path": "apps/web/models.js",
@@ -321,8 +396,8 @@
     },
     {
       "path": "apps/web/overview.html",
-      "bytes": 2772,
-      "sha256": "9d87912164105fc80df1585fe021597b2af301e7cdd672704e4524110f06a435"
+      "bytes": 2778,
+      "sha256": "2df74d66d34b6b9c1decb730507816454bfe206c6990e59b73b1267a2aadd46e"
     },
     {
       "path": "apps/web/overview.js",
@@ -331,28 +406,28 @@
     },
     {
       "path": "apps/web/plugin-detail.css",
-      "bytes": 9345,
-      "sha256": "8bfed40f67ead94fce162216d003d2524f903a28b5392ce072bd428b042ec258"
+      "bytes": 9682,
+      "sha256": "87f484cdb530fc109d90145265dcba5eef54c294949f85bf6f037f7af278796b"
     },
     {
       "path": "apps/web/plugin-detail.html",
-      "bytes": 5645,
-      "sha256": "05949d3dccc3be06fce335dfda3e6729e0a364207da57d6e2078127b0cb24568"
+      "bytes": 6997,
+      "sha256": "49bc9935e6510475efae94ce66a5707bdfa9d48f99d706c4019015d7b032ecd6"
     },
     {
       "path": "apps/web/plugin-detail.js",
-      "bytes": 14895,
-      "sha256": "1bbabfa2919cc623906ca347d6f5e97cf61d113cb4b6cccc552a5d73629d164f"
+      "bytes": 25677,
+      "sha256": "068dadd0dc78af59c387c2263a124f9623890377588b7d5003f89180330d78c4"
     },
     {
       "path": "apps/web/plugin-records.js",
-      "bytes": 1112,
-      "sha256": "1504160d2ba0014542b9072374157552a526d94cf95cddee4b39a6ac772b46f2"
+      "bytes": 1244,
+      "sha256": "f4f7ad7ffb379fa14919894924bdcff65be41f5286606ad55986e8921ba37ff8"
     },
     {
       "path": "apps/web/plugins.html",
-      "bytes": 1304,
-      "sha256": "df3c31d01217a20c3f32c0e936082c739813c3dd7c2bbd3626e423b83e4a03d1"
+      "bytes": 1307,
+      "sha256": "c3be6ad864258f557c34da08bb455e45d23ad67dcebaac3eab8df378841ff2f4"
     },
     {
       "path": "apps/web/plugins.js",
@@ -361,8 +436,8 @@
     },
     {
       "path": "apps/web/profile-chat.js",
-      "bytes": 2010,
-      "sha256": "905b3651bd066d12f4b660d17fc65c5fa6226c06f23156ad59d763e07cf0c72c"
+      "bytes": 2013,
+      "sha256": "07922e8279b04651583ce355bb56483560f7b1e04b22c92c7f8d0c1d88b4e6c8"
     },
     {
       "path": "apps/web/profiles.css",
@@ -371,8 +446,8 @@
     },
     {
       "path": "apps/web/profiles.html",
-      "bytes": 2630,
-      "sha256": "3548af698b92b1e6b624abce062e594de8e1eba0a40c3ae29c8d607dbedce145"
+      "bytes": 2633,
+      "sha256": "346ffe2c472b26f260e64f4934a2c66ec590095c377710e22d1f78ff90660ee6"
     },
     {
       "path": "apps/web/profiles.js",
@@ -391,23 +466,68 @@
     },
     {
       "path": "apps/web/shell.js",
-      "bytes": 6931,
-      "sha256": "348b16292566dfb1329e64d982f7ac9d6fc2a3f2844b6deabd7e72eb4251280c"
+      "bytes": 8577,
+      "sha256": "3ff334d0a31762df8d9405e342bbe541f0ad3b8ee54b6570a24e11e25458e17c"
+    },
+    {
+      "path": "apps/web/speech-agent-prompts.js",
+      "bytes": 8595,
+      "sha256": "75aa58bdeaaee332c5c1cb2ab30edd672da5c4e9203300755b8c83cac7a36790"
+    },
+    {
+      "path": "apps/web/speech-guide.css",
+      "bytes": 31050,
+      "sha256": "92d05648195fd55e4fcf4026a7c9158345c1b89763becab5d324726453d9c8bc"
+    },
+    {
+      "path": "apps/web/speech-guide.html",
+      "bytes": 1244,
+      "sha256": "12dfbe2a2dbcb9b361a85f976e3d23dd4a9541ff27e2e4c4bca792a48a079b8e"
+    },
+    {
+      "path": "apps/web/speech-guide.js",
+      "bytes": 78505,
+      "sha256": "620c700e1ab7dacbf11cdd6e726af04f389f452fa6572f0a1c6e77afc851548c"
+    },
+    {
+      "path": "apps/web/stickers.css",
+      "bytes": 1520,
+      "sha256": "aa0bf6c5c1eb2459e3eaf8e8dd40602d2fd7a4646978fc56552cdc6f3646e302"
+    },
+    {
+      "path": "apps/web/stickers.js",
+      "bytes": 4052,
+      "sha256": "fe2640d2cf86915899027ffaddc11e59f40d4c3727685f4364728aeec4de0cbd"
     },
     {
       "path": "apps/web/style.css",
-      "bytes": 7296,
-      "sha256": "0280e94905ed95b25d8f1c5fe1a10f7179b79abafe8c8fdf96ac0f9df0d3c221"
+      "bytes": 8888,
+      "sha256": "519793a88599389f798a64e08dd00bd986f0903f19a3e97178c5a16fdcaef519"
     },
     {
       "path": "apps/web/sw.js",
-      "bytes": 1827,
-      "sha256": "1a74247cf9f2296a606d593eaf6ec0bc84dc89c62120502349432a9b0244224c"
+      "bytes": 1929,
+      "sha256": "43ecd7f2a4f5c79c4a09b27b4574653706bc6586a6a1a292c1ed3586886b88da"
     },
     {
       "path": "apps/web/tool-catalog.js",
-      "bytes": 5333,
-      "sha256": "705125dec710610140c7b0b5fa7e8e37e7f243ef59f16cc32be461238c59c687"
+      "bytes": 5485,
+      "sha256": "67ce96a2c33341c87811872dfeb211e420e05a3cf6023c9bb2ce3c8909c37f9b"
+    },
+    {
+      "path": "apps/web/voice-replies.css",
+      "bytes": 2214,
+      "sha256": "6f977b2408f5382c59b4085ad4ccf25cb25e95e5eac0fff8ed3091cc93adb9d0"
+    },
+    {
+      "path": "apps/web/voice-replies.html",
+      "bytes": 4033,
+      "sha256": "d579eb100142ad36df881f602ddf63bccdacf417ac18f2663dbe9c6f9af78202"
+    },
+    {
+      "path": "apps/web/voice-replies.js",
+      "bytes": 6739,
+      "sha256": "d398b18c79a2a0291b4f17354fb5a4e57a4d79893ff1b8541c2c4246e42cb5f2"
     },
     {
       "path": "apps/web/whale.svg",
@@ -418,6 +538,11 @@
       "path": "bridge.example.json",
       "bytes": 162,
       "sha256": "74f78b01d72e98967e47488fbd7c372dcc16bdaea2b124ffa6152e5f597b11a1"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 1370,
+      "sha256": "85cd900e5b58eb386fc1f24afbfc8d79c08fb260febb7c585bdea842c6252149"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -431,13 +556,18 @@
     },
     {
       "path": "docs/DSH-BRIDGE.md",
-      "bytes": 5412,
-      "sha256": "1b7df9e9b9f83997daaf6decbceb80e3a61378fd751a12aff5718306df18178d"
+      "bytes": 8154,
+      "sha256": "f1dec2eaca51c0cc055f4ceed0285a7d90dd878c1e97b0803f50367e7c74f80f"
     },
     {
       "path": "docs/INSTALL.md",
-      "bytes": 2758,
-      "sha256": "096f6e53dd3f033dd5628f9e2174222dc2fcb1fca6a850d131c8d74f963074a4"
+      "bytes": 3831,
+      "sha256": "70019b4eabeb38f6f3d64a0bf4594f2301e10502f54278f0f1101e9373e36f09"
+    },
+    {
+      "path": "docs/LOCAL-PLUGINS.md",
+      "bytes": 3087,
+      "sha256": "990af935db48df9e27a29f7b4507501b33b3401a8276e42ccfc266c5714d12bf"
     },
     {
       "path": "docs/PLUGINS.md",
@@ -450,6 +580,21 @@
       "sha256": "24ef1bdc005d4ba2e9e121b28035c9069bad77684e34650575a3485905b1add9"
     },
     {
+      "path": "docs/VOICE-RVC.md",
+      "bytes": 3652,
+      "sha256": "c6ba502952cbd30d6e26ee928340697a0a0f7ade6419b4681ac7c0941bdb8d97"
+    },
+    {
+      "path": "examples/bridge-media.example.yaml",
+      "bytes": 511,
+      "sha256": "ff9f61e7fd401864a97401ea0fca064148606efd57656e7d3fc5a82bba32c2f0"
+    },
+    {
+      "path": "examples/rvc-profile.example.json",
+      "bytes": 564,
+      "sha256": "c89315a9fc56b7f250dc585ddeb3da2805b6c83cc06e7738bd9e1a9fa1c2af46"
+    },
+    {
       "path": "LICENSE",
       "bytes": 1100,
       "sha256": "0d2c7796df9156e697d49fcf0f82dd52b1bbc7ae7731e6fb170b19f53f4dc7d0"
@@ -457,17 +602,27 @@
     {
       "path": "package-lock.json",
       "bytes": 288,
-      "sha256": "d20c478e5ddeec90ad16ccff2368b131d1248ad21d11e83f88672f1f8ee3343a"
+      "sha256": "1fc4fc8c58a77a2be377e80b341c7fed9d87e7231dc0a2e549f89f722178cc47"
     },
     {
       "path": "package.json",
       "bytes": 712,
-      "sha256": "855e29cb04882fb8cbc83b81b5372afeeb9a2e3f63b4ecf0e06d08e34161c951"
+      "sha256": "17a62c5d75dda763490be0d4638fa6944f968e4ce49c6513b2543745ae33006a"
+    },
+    {
+      "path": "packages/companion-capabilities/asr-downloads.json",
+      "bytes": 2421,
+      "sha256": "77a83a8cf8ab3f0a39f4a8f65cb3833d5c556af663fb787864bf03d107ff6840"
     },
     {
       "path": "packages/companion-capabilities/asr-worker.py",
       "bytes": 1930,
       "sha256": "7bf5e02ad01445c112a3a1d25c537810afbc5aa5646d6642a3b96a362376b6d5"
+    },
+    {
+      "path": "packages/companion-capabilities/basic-speech.mjs",
+      "bytes": 2939,
+      "sha256": "6a7baf3beef120d0209760b97101ea45632d1b9e23114817eec13f60839ef5e3"
     },
     {
       "path": "packages/companion-capabilities/bili-public.py",
@@ -480,9 +635,14 @@
       "sha256": "76c3c0ef92810b83a1002f72d93054a4af74251f67a812b76c1c5f9f2de55a78"
     },
     {
+      "path": "packages/companion-capabilities/extract-asr.ps1",
+      "bytes": 2820,
+      "sha256": "cf228bac7e3a1c330610ce2927bcefd70ef484dd30c179ee252b06c62d59723e"
+    },
+    {
       "path": "packages/companion-capabilities/host.mjs",
-      "bytes": 20920,
-      "sha256": "00336e2d072bc8a903ea0ddff2505468b7a9651c3a2ede0ef0209fa0edfddf26"
+      "bytes": 21049,
+      "sha256": "cfac6cd9cf5458b450ec2d0c91544e61dd17f1a0f49e8593eea9229f82c629e2"
     },
     {
       "path": "packages/companion-capabilities/installation-integrity.mjs",
@@ -501,13 +661,43 @@
     },
     {
       "path": "packages/companion-capabilities/isolated-tts.mjs",
-      "bytes": 7748,
-      "sha256": "8858cf985594244c2c2ed0e7bdf60edc711fcb1f1c357fbc1539d114855112f0"
+      "bytes": 8265,
+      "sha256": "68693987756a6f95e44d8c7af8426bec8e20d0b8f9bca7ba9f16048473cb534f"
     },
     {
       "path": "packages/companion-capabilities/media.mjs",
-      "bytes": 6541,
-      "sha256": "dc69e18f73f3d8b77971f911cb52307ff46adef58b517c4533afdd4f5700aab9"
+      "bytes": 7540,
+      "sha256": "24c15e4530f4b5247dc4253bcc6b3f300b356fc5992309d0905f78d92de7bf58"
+    },
+    {
+      "path": "packages/companion-capabilities/portable-asr.mjs",
+      "bytes": 9344,
+      "sha256": "051acafb2470c1393f013e72d27778c843fde23b1c950b38ed15482036ad41cd"
+    },
+    {
+      "path": "packages/companion-capabilities/rvc_boundary.py",
+      "bytes": 6263,
+      "sha256": "b663e48c0f7902eaa2f3e9b6de6276b3681e7ea8bb3752c41fbb3df07e874e05"
+    },
+    {
+      "path": "packages/companion-capabilities/rvc_dml.py",
+      "bytes": 6282,
+      "sha256": "a2284b851faf2e603012715c29f5c34d68de164d4845c75263fc3f02c420e4c0"
+    },
+    {
+      "path": "packages/companion-capabilities/rvc-voice.mjs",
+      "bytes": 3258,
+      "sha256": "96b2a6ee2b6ed23840136a8c49ec0b79e1879133f52a4ab0eb0171136c0567d6"
+    },
+    {
+      "path": "packages/companion-capabilities/rvc-voice.py",
+      "bytes": 7054,
+      "sha256": "d1c903ab8867d374552a661aabd55620381c5be13b726e9fbb6c9b08326a8cac"
+    },
+    {
+      "path": "packages/companion-capabilities/system-voice.mjs",
+      "bytes": 10503,
+      "sha256": "0caf72aafc277fa7c66739a8f8532d4971842db2af759ddce069a976384a75b6"
     },
     {
       "path": "packages/companion-capabilities/vendor/bili/archive.mjs",
@@ -526,8 +716,8 @@
     },
     {
       "path": "packages/companion-capabilities/vendor/integrity.json",
-      "bytes": 3316,
-      "sha256": "94a83660bb9b7f779dc7563e74a13b98fe14ed438583dc77e2d4ff876243d972"
+      "bytes": 3317,
+      "sha256": "0b9f8065d7d10fbe2b7dd04515b7fc547e3c221f7ba737e0863294a1eef92760"
     },
     {
       "path": "packages/companion-capabilities/vendor/silk-wasm/lib/index.mjs",
@@ -560,14 +750,24 @@
       "sha256": "c710f48c6559d551c0ecfe93d7838d27c3de003701018ee6a7f8194f43a2ebf2"
     },
     {
+      "path": "packages/companion-capabilities/vendor/singing/encode_voice_segments.py",
+      "bytes": 1622,
+      "sha256": "afe8f1087d6adf35ae1321c0ca5257faee158d57706ae0bcf16ed042d6a1990e"
+    },
+    {
       "path": "packages/companion-capabilities/vendor/singing/intent.mjs",
-      "bytes": 5327,
-      "sha256": "9daea9807d3ab178c3b85e613c36bd7a27d768e648345f9bb41f63ee430cd805"
+      "bytes": 6749,
+      "sha256": "123c50aa344fa87d75a80901430abad7718c806bb549516b7fd410ec34510808"
     },
     {
       "path": "packages/companion-capabilities/vendor/singing/mp3.mjs",
       "bytes": 3348,
       "sha256": "8572f0f1e37d520a35cfc7c177378364f45d0f1e30a28b984df80b366e1f333c"
+    },
+    {
+      "path": "packages/companion-capabilities/vendor/singing/owned_process.py",
+      "bytes": 10320,
+      "sha256": "b28276f77d04c6cab3c9c890bcdfb368955cd7f97e0fdf7a0df0e76a8871a83e"
     },
     {
       "path": "packages/companion-capabilities/vendor/singing/owned-worker-launch.py",
@@ -580,19 +780,24 @@
       "sha256": "ae29b2d36db9521753486bef2efa4fae9c52be849f2ee096b80ff151bb450ea1"
     },
     {
+      "path": "packages/companion-capabilities/vendor/singing/prepare_voice_segments.py",
+      "bytes": 6725,
+      "sha256": "a0918d83767232ac75596dfe96af05c6db57b910228a00cf5cd3d8ab3edcfbc7"
+    },
+    {
       "path": "packages/companion-capabilities/vendor/singing/service.mjs",
-      "bytes": 16119,
-      "sha256": "273a6b6eadf9b9e01fe7fa7e9149f93be1afe4121f2373bdde91def6efb4535b"
+      "bytes": 17768,
+      "sha256": "3ec64c8d9e7b2836cac79f68cef6335833f194524db14030a1ac77b6e9a61930"
     },
     {
       "path": "packages/companion-capabilities/vendor/singing/source_download.py",
-      "bytes": 3778,
-      "sha256": "a339eb931254f08d5285ebdf815aca3ec522440807ac65085a5a64acc1208e68"
+      "bytes": 4689,
+      "sha256": "4f17b37719c74130e9c396fb149e36ee1787e9221434522345192be6f15185f1"
     },
     {
       "path": "packages/companion-capabilities/vendor/singing/source.mjs",
-      "bytes": 4583,
-      "sha256": "8d960cad6e254f01009b103b90e0e86a6e676ed42e62ea530e8abe551edcf52b"
+      "bytes": 5229,
+      "sha256": "2bf7a48c2bb03a7972f69a21618b85a59f0ece917691747b2733fc0395bacf32"
     },
     {
       "path": "packages/companion-capabilities/vendor/singing/worker-client.mjs",
@@ -611,18 +816,18 @@
     },
     {
       "path": "packages/conversation/periodic-proactive.mjs",
-      "bytes": 4966,
-      "sha256": "cfe5b1636bbc1440145d535a810a5d15c8ec90928dacc13a540398b6fbc7ebc6"
+      "bytes": 5269,
+      "sha256": "035eaf3f6bf9b3160d8c6c70a9f85a63dbe27e69987c206fdbee8f380e83f14c"
     },
     {
       "path": "packages/conversation/preferences.mjs",
-      "bytes": 7370,
-      "sha256": "5febe634f65a5e1019223398a3acd90b105e25bd89530baf043c7926228d1e64"
+      "bytes": 7637,
+      "sha256": "869920f7fb2c0593a41dcb72e3ec7dcfa87cde30e060abef189527cf355d19a2"
     },
     {
       "path": "packages/conversation/proactive.mjs",
-      "bytes": 2680,
-      "sha256": "ac9d1cca59fe395a2e83f50a7798a0828265199e810a9e70560c4cfc90490d44"
+      "bytes": 2800,
+      "sha256": "35846ae7b3abaa761e275e4b90825b59e3883ed8e9a942cea707e2ed31e2fbdd"
     },
     {
       "path": "packages/conversation/profiles.mjs",
@@ -650,14 +855,24 @@
       "sha256": "389777ab3546834184dcfb55afef0e0912144c9fb0da533b06e81ed7119e57e7"
     },
     {
+      "path": "packages/conversation/reply-control.mjs",
+      "bytes": 1664,
+      "sha256": "3918f51dfadfb4e0471ae1686aa066fa31415339a6b1171f35493823f37e9015"
+    },
+    {
+      "path": "packages/conversation/reply-layout.mjs",
+      "bytes": 1202,
+      "sha256": "04ff2d280f7d58e6445b09da8849c891bea28de08a3f6c4e1f66f1627fb43875"
+    },
+    {
       "path": "packages/conversation/session-tools.mjs",
       "bytes": 1029,
       "sha256": "16ecf37ce1ba1be5621d3018e828c4ccb48a5dd008343f8a92479a49b72fbfb7"
     },
     {
       "path": "packages/conversation/store.mjs",
-      "bytes": 18668,
-      "sha256": "5aca3549661d3b198dd2a0abf16ae86faeac22b415feb8b84cdbdbec860d06fe"
+      "bytes": 22754,
+      "sha256": "800121a4632292b2961ecf62aed16ef9080c3255371b481e296202fc316347e3"
     },
     {
       "path": "packages/conversation/timeline.mjs",
@@ -681,23 +896,23 @@
     },
     {
       "path": "packages/diy-plugins/bili-media.py",
-      "bytes": 2021,
-      "sha256": "4b96c69791723e39760750bfe7c7e5110d2392e0cd4957786ae0cd15676468c9"
+      "bytes": 2286,
+      "sha256": "90628c18f2693de7848d9c8891bfd22b126cc0fee9fc0cdd16a4e98cf28f28d0"
     },
     {
       "path": "packages/diy-plugins/media-policy.mjs",
-      "bytes": 2608,
-      "sha256": "a9000a6acbcb53f24cf85905f40ab010ef591e20bb96f6c1eec3188871cc3b09"
+      "bytes": 2955,
+      "sha256": "79d31e6c33bea4eb788df0030792f7afae418aa654d837a214d294ac1fc99f65"
     },
     {
       "path": "packages/diy-plugins/media-source.mjs",
-      "bytes": 4760,
-      "sha256": "1aa06c369b7859d0658737af990295a5f3863f4cdf01ab135cf5a92c2bf3028f"
+      "bytes": 5567,
+      "sha256": "5654d218ad9bbeb9145b13e7de5e7c1f4c40a093c054a21730cc08a9918c95c6"
     },
     {
       "path": "packages/diy-plugins/runtime.mjs",
-      "bytes": 12372,
-      "sha256": "2982dcbf4ba3923fc6bfba93d9eea335d9cd5737dec1c031c5ccfd3ed7c49892"
+      "bytes": 14659,
+      "sha256": "d0037f2864030d21cd54c865fc867b1ff72018166fda488f3f159522cf42965c"
     },
     {
       "path": "packages/dsh-adapter/antigravity-worker.mjs",
@@ -716,8 +931,8 @@
     },
     {
       "path": "packages/dsh-adapter/bridge-runtime.mjs",
-      "bytes": 6483,
-      "sha256": "a4b97a709dd718c527d3c737ce316b108f16d59ea6823fe41f2fd074b69c9af4"
+      "bytes": 8884,
+      "sha256": "9a10e2ac4dc9d4d6a0bcfefdf312e20aa05fee2263bbb5eb6c220b5ea31ef4a8"
     },
     {
       "path": "packages/dsh-adapter/companion.mjs",
@@ -760,14 +975,54 @@
       "sha256": "93a36953948eeb6f1d5a05971bc54601beb58e09ca2a6e2ea14ddd445e0f5c98"
     },
     {
+      "path": "packages/dsh-bridge/attachment-input.mjs",
+      "bytes": 3044,
+      "sha256": "03062e8221b1865e846206ccb95ea3690f37cbc56a8d24770665d7f72b56f802"
+    },
+    {
       "path": "packages/dsh-bridge/automatic-music.mjs",
-      "bytes": 3446,
-      "sha256": "61796a6759e73ea0f80a5051166c5c833a6124cec6735938e2ced647ba76bf57"
+      "bytes": 5066,
+      "sha256": "ceb6c4396851dc7b954cd9fc9f9837e96256ca6c47d5e549cc4b14614ea62094"
+    },
+    {
+      "path": "packages/dsh-bridge/backup.mjs",
+      "bytes": 4850,
+      "sha256": "b7f805a780fddc33b740e1815a29a8bd141e9c54e39758f86452d6711c7f6eb6"
+    },
+    {
+      "path": "packages/dsh-bridge/chat-continuity.mjs",
+      "bytes": 6840,
+      "sha256": "3e63d4e49cbaef58b5cb18e16fee574eae43f292aaa2a9738a4bd05c982248ce"
+    },
+    {
+      "path": "packages/dsh-bridge/chat-dispatch.mjs",
+      "bytes": 3816,
+      "sha256": "a9503cb2f16aef7f1b273d65473482720df06d14d92a651b121ca71e211baea2"
+    },
+    {
+      "path": "packages/dsh-bridge/chat-prompt.mjs",
+      "bytes": 3387,
+      "sha256": "e44bfe2178c016391d6154462e37591bd8c38f50b64048d08a86456d4809031e"
     },
     {
       "path": "packages/dsh-bridge/chat-window.mjs",
-      "bytes": 10983,
-      "sha256": "1c9d15bdec808678f4415598c048e9e9f3ca7ff7087021df8d6fd83dbb0acead"
+      "bytes": 13297,
+      "sha256": "358c04d26ccf03448672be48b371e467eae286d10fc1e0aa238017bd2f04aeec"
+    },
+    {
+      "path": "packages/dsh-bridge/configured-music.mjs",
+      "bytes": 5509,
+      "sha256": "5452c6363b98279fff0e5f43be4a1f02e641488d909ef79d15ce46b53bccf3f4"
+    },
+    {
+      "path": "packages/dsh-bridge/course-query-context.mjs",
+      "bytes": 4898,
+      "sha256": "8fb1bae341ebb7dbd79bd4eaf95edda9bad8831184c1796c8499ee9d42f6c5c5"
+    },
+    {
+      "path": "packages/dsh-bridge/course-query-reply.mjs",
+      "bytes": 3513,
+      "sha256": "ccec9037dadb354620bcd12e0c6bf32d3fc8eda0644c9ff86b9a8c3518138190"
     },
     {
       "path": "packages/dsh-bridge/course-timetable.mjs",
@@ -776,8 +1031,8 @@
     },
     {
       "path": "packages/dsh-bridge/diy-plugins.mjs",
-      "bytes": 9272,
-      "sha256": "34adbf481b0697a536e2f9dd3b3b2fade7a23bfc9e32b5bc5488e346c4896ee0"
+      "bytes": 8475,
+      "sha256": "2b935107a8faa2be78fc713b3931bb6868f70ab80419c85eb5cb98a6cc2571bd"
     },
     {
       "path": "packages/dsh-bridge/fish-v1.mjs",
@@ -785,9 +1040,14 @@
       "sha256": "72dd236a8221c385daa4e227ba692f96560a697c4e35e00c9d4cefbabb791917"
     },
     {
+      "path": "packages/dsh-bridge/gif-frames.mjs",
+      "bytes": 2275,
+      "sha256": "8f0b9a8f6fc71043c018c6af1ba6064e08e590ed1621ebcabe4a14f5c496b799"
+    },
+    {
       "path": "packages/dsh-bridge/host.mjs",
-      "bytes": 13393,
-      "sha256": "bb5788b1d825145d2842cf0f304c018a0bdc2f2e58a5dcc80f9e8417f36a1b79"
+      "bytes": 18810,
+      "sha256": "43a91a19ef293d9fca054b59d7aadcc5a8c54660e39a3a4f25b7325da4cee48b"
     },
     {
       "path": "packages/dsh-bridge/import-timetable.py",
@@ -796,8 +1056,8 @@
     },
     {
       "path": "packages/dsh-bridge/index.mjs",
-      "bytes": 13909,
-      "sha256": "1b1e09c410686ceb9b1dea878c0f9f4b923d276d1eefcdb6a9d1482bb27d25a3"
+      "bytes": 23080,
+      "sha256": "e75bc601b7621004ecdbacab05e7e7a4476a1da68dbf16fd313eb78400a71ab7"
     },
     {
       "path": "packages/dsh-bridge/legacy-antigravity.mjs",
@@ -806,28 +1066,68 @@
     },
     {
       "path": "packages/dsh-bridge/local-hearing.mjs",
-      "bytes": 5716,
-      "sha256": "2f66ac2b3bad8dffc11670c5898529eca4e0e459e5a22c7e2bab7e3da8ef8e77"
+      "bytes": 6102,
+      "sha256": "c9abc76d024bfa893abc47980366635286956c3561cc5bd1471b38d9648d67dc"
     },
     {
       "path": "packages/dsh-bridge/local-media.mjs",
-      "bytes": 3375,
-      "sha256": "db59af760b0e9b94deb89c6c55fa730b32a7adf5f1531dbcf59266b6ec45dfc6"
+      "bytes": 5975,
+      "sha256": "f1931a76c170242dc033133cee37080337a79bd2ac865467b1b5bae161a0c523"
     },
     {
       "path": "packages/dsh-bridge/local-music.mjs",
-      "bytes": 3773,
-      "sha256": "323aaa6978874e70be4667224a6ac09ac54447d13fe2eea8eda380591e665dee"
+      "bytes": 7064,
+      "sha256": "7621c484d0d4b5de5da2180e61ecedf754e06009e6a874d61ae7504bc2aa496d"
     },
     {
       "path": "packages/dsh-bridge/local-singing.mjs",
-      "bytes": 3589,
-      "sha256": "d5476beb2576720fd7b475eb5be951d679edf04ca1cc022364247be5b079b43a"
+      "bytes": 7130,
+      "sha256": "ca5b91198be3c4b11456270a7b2b2c5a498c163d1b0a67b0338021bbae8baf4b"
+    },
+    {
+      "path": "packages/dsh-bridge/local-stickers.mjs",
+      "bytes": 5220,
+      "sha256": "2b109a8a1d99a055e1db82d240dfcb30734a4144915581ab6242212939e5c1c5"
     },
     {
       "path": "packages/dsh-bridge/local-user-plugins.mjs",
-      "bytes": 4011,
-      "sha256": "54291b8fc99e5d925f38eeeeb72c4d714fb668f5ae44e8ea8b9a90e4209dbc37"
+      "bytes": 4448,
+      "sha256": "6f1072de1181d193e2afd938b4439f95f2a94e20cfff14a3d1b470201cb4999b"
+    },
+    {
+      "path": "packages/dsh-bridge/media-audio.mjs",
+      "bytes": 1381,
+      "sha256": "f051f82528f692dbccc287da7d0c041635d344be7e78b6bb17551140fd399e89"
+    },
+    {
+      "path": "packages/dsh-bridge/media-connections.mjs",
+      "bytes": 8999,
+      "sha256": "1c1117b32ff122c12a8dcf45c4933ee65667da9db5e6ef37596c22c4b5c4ff21"
+    },
+    {
+      "path": "packages/dsh-bridge/media-live.mjs",
+      "bytes": 3102,
+      "sha256": "8eb1720b130d10014d017a49344c38f23e41deab82f072160b81e746bcaa23d0"
+    },
+    {
+      "path": "packages/dsh-bridge/music-candidates.mjs",
+      "bytes": 1537,
+      "sha256": "ac7661934d401ae72d6d6cf4e929d8ace806a66a3b9f4c53cf553893d08504f3"
+    },
+    {
+      "path": "packages/dsh-bridge/music-settings.mjs",
+      "bytes": 831,
+      "sha256": "3af947966bfeaaca1b5723610f439e5d6e9a8b6f742cb72502c65a7ff0319393"
+    },
+    {
+      "path": "packages/dsh-bridge/plugin-generation.mjs",
+      "bytes": 2456,
+      "sha256": "f65b0f76df0a034c89d423c21f34e2d92afe05c0d9866cf2a73a74fd61c63320"
+    },
+    {
+      "path": "packages/dsh-bridge/reminder-context.mjs",
+      "bytes": 7620,
+      "sha256": "16b14ba948b5e71ba1c6d73d72aed61392dae57e2bf11d85d74ca9300152216c"
     },
     {
       "path": "packages/dsh-bridge/tool-catalog.mjs",
@@ -840,14 +1140,319 @@
       "sha256": "9730fea114d62541ced64e891370022b3704d22d2cd05975f7fe51a20d4edd3e"
     },
     {
+      "path": "packages/local-user-plugins/components/qq-bridge/LICENSE",
+      "bytes": 12733,
+      "sha256": "8422340c2f9aac0946a1ff8a696e8744e4adde7bd6afa371dbcb15d0a7b2b522"
+    },
+    {
+      "path": "packages/local-user-plugins/components/qq-bridge/src/safe-fetch.js",
+      "bytes": 14395,
+      "sha256": "4dc21516904bbdd9771aa85d388985b4c298ec05ed244f06909078b6b70e108a"
+    },
+    {
+      "path": "packages/local-user-plugins/package.json",
+      "bytes": 42,
+      "sha256": "f69ed17eea98f49ee075f676bae79df9cb779e54d5887b94d94313d34511170c"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/dsh-social-bridge-plugin/deadline.mjs",
+      "bytes": 993,
+      "sha256": "63132407bb93db02ad5258fd0ad62bf6e56387d9afc495bb37387eb18874f1a1"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/extension-runtime/catalog.mjs",
+      "bytes": 16198,
+      "sha256": "3be28844d82ec1926ee6693c8c08bd14507b3cd334d7d4b6b0e6fc86a4abbcfa"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/extension-runtime/index.mjs",
+      "bytes": 20446,
+      "sha256": "72e806b28e9965e082e5b116b212a4f9fefc54c685039d85d8abb14591f6c0bd"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/extension-runtime/snapshots.mjs",
+      "bytes": 2546,
+      "sha256": "7d7bf53634c0a8c487c94efcf1db8e6de9fb0963a608b1bbd9fb596a159c0755"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/media-experiences/admission.mjs",
+      "bytes": 2412,
+      "sha256": "45d7641eb503f93b3eaa004f83ef885d08d34e924217f7ff86986544a17b0706"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/media-experiences/ledger-chatagent.mjs",
+      "bytes": 13153,
+      "sha256": "1c43f6586e738a39e9e17677686f24e5631d5871f79ceed953e71b083773c39c"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/media-experiences/ledger.mjs",
+      "bytes": 12780,
+      "sha256": "9ac6f5ab8b57a1f2eb01bbca0cb65b7d0a7cd09a3bd3ffb2af6d266130558323"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/media-experiences/music-scheduler.mjs",
+      "bytes": 11114,
+      "sha256": "482c76720a969a5cc76c7d7a70bbf2faa3fc38095caec3dfd6858711747a2434"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/media-experiences/runtime.mjs",
+      "bytes": 7234,
+      "sha256": "d7e953fa6512164a959f47550c965354165cc285b5a8cdbe668a28a41872b3b8"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/media-experiences/settings.mjs",
+      "bytes": 4479,
+      "sha256": "368a7fde2827c22c0fe716950966f69d022f39429b1f8ae70221e72ad573f34b"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/plugin-api/catalog.mjs",
+      "bytes": 12348,
+      "sha256": "6d32cc841a5d8fb365d1e0eab2052afd985a0b4f462a0be3e94da09b004f31cb"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/plugin-api/documents.mjs",
+      "bytes": 3031,
+      "sha256": "aed3169243882d9ab9e10468777edd8c2afcf3e78d439027c3031cfba30d8bf8"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/plugin-api/index.mjs",
+      "bytes": 20231,
+      "sha256": "b971d5299b30a75c8914ffe1c831238e8f58246f7b4e92759c1c8e19126361ac"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/plugin-api/installer.mjs",
+      "bytes": 5164,
+      "sha256": "d2fb8004a03923d117d04b90732ae7834cda7bb217dd02deb136e90cbd4e6632"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/plugin-api/model-utility.mjs",
+      "bytes": 2293,
+      "sha256": "9ba43a568a6462bafe633d40247e015c862817e44c0567d671971a5c9826ec19"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/plugin-api/process.mjs",
+      "bytes": 5033,
+      "sha256": "d6f284e0f3e1412ac96861a6c8983f1b4003cad3b40daa670829c821895a2327"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/plugin-api/worker.mjs",
+      "bytes": 4680,
+      "sha256": "c6ae1e9320fe93356245b419d25d86e71c66a0971f44db259b172c86c20a1816"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/plugin-api/zip.mjs",
+      "bytes": 5806,
+      "sha256": "63010454ffb2667b703f25d52dc879b5002422fbdc131667f60479997b8d712b"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/archive.mjs",
+      "bytes": 2860,
+      "sha256": "6a3e035613bfa21858dabcabe4e276febc8bc8ff0809bd568a32f0cead73bf91"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/configured-host.mjs",
+      "bytes": 5668,
+      "sha256": "853d9531fe4f7d65e0dca543d69635ad488e80c5e3dd9cd7a643968453598955"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/content-policy.mjs",
+      "bytes": 1064,
+      "sha256": "ae30a5a0d4a8200662f70724c6f4ffcc7efa985e66d91ae9a1120d5966a1db88"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/contracts.mjs",
+      "bytes": 4508,
+      "sha256": "70d999c594ad95a3563ebdfefad8c542d53bbfc627397251808579d18e20bd06"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/credential.ps1",
+      "bytes": 916,
+      "sha256": "c5e72d47489a3617cf6fc098169f26afecb3e957a2ab16ee727422eab1f0f4f5"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/error-summary.mjs",
+      "bytes": 1362,
+      "sha256": "010cc962b9e16278376e33245e604f87f79eb6b30355ef7279cbc22eab6e3552"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/inference.mjs",
+      "bytes": 4629,
+      "sha256": "a763dafe0ad774368b22f6c36433422cac955b4d4f3fab50b1b584371bc0d5e8"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/intent.mjs",
+      "bytes": 1336,
+      "sha256": "e625b8ec952d4f72a89bb853abbc32c2ce36c44d7c9d10c036ead9e466026165"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/isolation.mjs",
+      "bytes": 761,
+      "sha256": "3691f32594737f88de1e222f2fe22ad2905a372c6962b5498ecaefea9193c133"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/journal.mjs",
+      "bytes": 1664,
+      "sha256": "0880bd4d62c184b85a7593e7a58812e7ca14a11d4e74e204ff3c98b779e97848"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/lifecycle.mjs",
+      "bytes": 2056,
+      "sha256": "422da3d2175c27597ad493e0be9ec5317142cfe0c11cf32f7719f597b794f7d7"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/lyric-evidence.mjs",
+      "bytes": 2018,
+      "sha256": "45563e88890254f47e7039b169e4d91c737f413992cd45a240533200a66c4af8"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/music-bridge.mjs",
+      "bytes": 2266,
+      "sha256": "4a4d1b158b6bcb10a149cc77112b594f8d0912524d07e2a199afb67299857d58"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/music-tool.mjs",
+      "bytes": 4601,
+      "sha256": "df8e994439f6ee486211546ed7e5ab4a10abec1959589420265f610c9f51ecc0"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/music-turns.mjs",
+      "bytes": 6150,
+      "sha256": "8aa263a922ecfda2d8d90aebd1d130cf847e003229663b564dabfc5d8500a8f6"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/package.json",
+      "bytes": 33,
+      "sha256": "a90fc33418afa2b9cbf4768524b021135b965ecdf993457505bfae3ac44a8428"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/pcm.mjs",
+      "bytes": 392,
+      "sha256": "ee94bd390a0ad869afe40c920459faef2c87648758dacde6e3ad55013a6e86ee"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/remote-source.mjs",
+      "bytes": 10279,
+      "sha256": "d2e782ecf613bea91cdd06f833c2010990cf59452c2db730a4d87e02ec209ac1"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/scope.mjs",
+      "bytes": 1200,
+      "sha256": "d49bc047df0c5bb8792586a61a91c5a27a57aacf2e2f4e4970bc3c5dece5dca3"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/service.mjs",
+      "bytes": 15901,
+      "sha256": "3ef6eba147032f6d5dd176be378dd5090d1ab8e7c792d850c8bea154990f14d3"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/source-download.py",
+      "bytes": 7083,
+      "sha256": "59d6012fef76d7396b5dc5d6c7264420d04934e2ac034e65f22c684032aa70b4"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/subscription.mjs",
+      "bytes": 5015,
+      "sha256": "003b78c9c759791cfb38eee1d2e457f014fb96a39d26bed6d39c26a542d06db0"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-music/tasks.mjs",
+      "bytes": 2969,
+      "sha256": "a775987b9d577586203537fefd216b56b5fd75cca758185d4e0faeac706bde56"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-short-voice/credential.ps1",
+      "bytes": 916,
+      "sha256": "c5e72d47489a3617cf6fc098169f26afecb3e957a2ab16ee727422eab1f0f4f5"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-short-voice/hearing-core.mjs",
+      "bytes": 5503,
+      "sha256": "a45f61ed226646171f334409241d901993bce405b7d215cf9f0a675eeca58854"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-short-voice/live-hearing.mjs",
+      "bytes": 3167,
+      "sha256": "44bc80e5a0135cf34d7cedbc0554fe07948b878b12d6ac53a4837d8b927f1383"
+    },
+    {
+      "path": "packages/local-user-plugins/packages/wechat-short-voice/package.json",
+      "bytes": 145,
+      "sha256": "36af4bb80fec3b440ebf55f00250403448d6fda60476bcbfa508b70813943afb"
+    },
+    {
+      "path": "packages/local-user-plugins/plugins/course-query/index.mjs",
+      "bytes": 3664,
+      "sha256": "0932e5caf2a9b127c4e4e0dbebd95d99aef09d426128845927dca7a3973ebaab"
+    },
+    {
+      "path": "packages/local-user-plugins/plugins/course-query/lib/query.mjs",
+      "bytes": 8190,
+      "sha256": "1ccb01c663a17c47e7b3d7ea7b03e63133cefa31ac833d6a2e0b087ab341ef24"
+    },
+    {
+      "path": "packages/local-user-plugins/plugins/course-query/plugin.json",
+      "bytes": 353,
+      "sha256": "1c4a01996439ed1213ceea39e1721c93d537c53069a192323a5329dc897cbaf8"
+    },
+    {
+      "path": "packages/local-user-plugins/plugins/daily-reminders/index.mjs",
+      "bytes": 5544,
+      "sha256": "d44800a480abda827d446c1c71d3c455e9b98e97b50491c26dd924248fe81f6d"
+    },
+    {
+      "path": "packages/local-user-plugins/plugins/daily-reminders/lib/bridge-binding.mjs",
+      "bytes": 1108,
+      "sha256": "ecaf5de965920b7138cfd8b185b2e3ae9dad4709a4f8df84ae6fb07dde63960e"
+    },
+    {
+      "path": "packages/local-user-plugins/plugins/daily-reminders/lib/scheduler.mjs",
+      "bytes": 5515,
+      "sha256": "7c8e6f171d7803cca7be0877877fc54bc477ee23cb9e0400cab7a86f5969c787"
+    },
+    {
+      "path": "packages/local-user-plugins/plugins/daily-reminders/lib/store.mjs",
+      "bytes": 14284,
+      "sha256": "79c006951ecb7b05da657f30ac14c778a591ea35cd17991d4c1de252347d0d52"
+    },
+    {
+      "path": "packages/local-user-plugins/plugins/daily-reminders/lib/time.mjs",
+      "bytes": 3548,
+      "sha256": "d0754adecf996cbbc5d04804abd9cd8e2e1093d6af580d497ad853ee1c4cb058"
+    },
+    {
+      "path": "packages/local-user-plugins/plugins/daily-reminders/plugin.json",
+      "bytes": 370,
+      "sha256": "d3ddf64e0f53e6b7f34a806330dc877ca7dde01ebf8a835a85c8bbda27486155"
+    },
+    {
+      "path": "packages/local-user-plugins/README.md",
+      "bytes": 737,
+      "sha256": "04cf29008afacecf5926292c557afc3639478e8a4017c62fbdd09a12b2ea2bde"
+    },
+    {
+      "path": "packages/local-user-plugins/SOURCE.json",
+      "bytes": 12436,
+      "sha256": "d54f2b8fbb71cc102605b8d310ab28f67cdf41703e216e31403b041808023d34"
+    },
+    {
+      "path": "packages/local-user-plugins/WeChatAgent-LICENSE",
+      "bytes": 12733,
+      "sha256": "8422340c2f9aac0946a1ff8a696e8744e4adde7bd6afa371dbcb15d0a7b2b522"
+    },
+    {
       "path": "packages/migration/backup-coordinator.mjs",
-      "bytes": 4165,
-      "sha256": "a6e1d145bcb71c4462e67427d73d7bdc7dfda9b4877cede179029e916b39e84c"
+      "bytes": 4548,
+      "sha256": "77da49fe0b5faa848175f05908605096863530b0910d7ade107024e986bc5431"
     },
     {
       "path": "packages/migration/capability-archive.mjs",
       "bytes": 5013,
       "sha256": "c1becec85392939a5e409b07c4c9cb06131ef7105e302e030469a44ad419e1e0"
+    },
+    {
+      "path": "packages/migration/daily-backups.mjs",
+      "bytes": 4136,
+      "sha256": "1c7204741582c735510e05f832eaaefbfe92b349722f3962de2de22c3aeff5e0"
     },
     {
       "path": "packages/migration/import-store.mjs",
@@ -890,9 +1495,29 @@
       "sha256": "29e72fca7a854121f1b2fef7f16ef8a9654d672986ff31581adfb0ea146261d7"
     },
     {
+      "path": "packages/migration/workspace-backup.mjs",
+      "bytes": 9302,
+      "sha256": "2158590bf7aab79bb9b97fe3b5b85a0cffc30fdda78be846a47c8dbdf49a4df9"
+    },
+    {
+      "path": "packages/stickers/library.mjs",
+      "bytes": 4393,
+      "sha256": "59416a193afbdda72a550392cd065fc17ab842fa58209c78400f365e9b79c005"
+    },
+    {
+      "path": "packages/stickers/vendor/dsh-meme-LICENSE",
+      "bytes": 1099,
+      "sha256": "b690cbe7074efafeacfd12ac75a32686a5912dce598d9b00f6ce91826e7a0377"
+    },
+    {
+      "path": "packages/stickers/vendor/search.mjs",
+      "bytes": 853,
+      "sha256": "79b0c19b1041928ed7193f778af5acc201973b15ac84075f77df9c997d896c20"
+    },
+    {
       "path": "packages/storage/attachments.mjs",
-      "bytes": 15960,
-      "sha256": "3d481c53a7d909e347b58f3e84d5ef34c1f3461408ac3f2edfc69d1949a3d889"
+      "bytes": 16045,
+      "sha256": "c7182a131620bceee458aa6c38231cae55b1ee475054a2650b551de6465f6a67"
     },
     {
       "path": "packages/storage/audio-duration.mjs",
@@ -906,18 +1531,28 @@
     },
     {
       "path": "README.md",
-      "bytes": 4573,
-      "sha256": "06bc93d6ec08ff160c6b8152faa08babf406f37399083c4ed27a62f177af62be"
+      "bytes": 6155,
+      "sha256": "3eac87dd030fdfe2c6c531132aed563068a38d47d73f979c61b2348167d6662d"
     },
     {
       "path": "scripts/build-android.ps1",
-      "bytes": 5085,
-      "sha256": "4ca19d4a3c651e6dc08f6de1dea014c296a14578d1df5b542a1e861e051c8694"
+      "bytes": 5917,
+      "sha256": "7aef77de9bde3268f226658b5ec982d43be8e411a191f9a0cf4d41471893b9e1"
     },
     {
       "path": "scripts/build-desktop.ps1",
-      "bytes": 4663,
-      "sha256": "f1b8f36fcc25cc6c7e001036651a556f4b80383ec58a5d467951d36db142e454"
+      "bytes": 4697,
+      "sha256": "e7bc17f8b7affc667f7ee9e5f5472e6aa02e391794b51ea52773e75da9c6b0c1"
+    },
+    {
+      "path": "scripts/build-icons.ps1",
+      "bytes": 4493,
+      "sha256": "9392972209d52ebb17a824f7ac0d41a5fe1a69b498b5a2e345bfd13785ee1cba"
+    },
+    {
+      "path": "scripts/build-installers.ps1",
+      "bytes": 7935,
+      "sha256": "90941bde8b55a360e2f9aee6540f0ef249f5d216b3b795aa3ebdb80648c229a7"
     },
     {
       "path": "scripts/build-region-data.mjs",
@@ -925,14 +1560,49 @@
       "sha256": "aa82610106fd24918cb56405a36e93e6ae9339aa5de6306eab5fb509e0279297"
     },
     {
+      "path": "scripts/diagnostics/collect.mjs",
+      "bytes": 14203,
+      "sha256": "b6a6820e555c801a2c6986a7a9771fc619b58c7c84c159a8112f4dd3fecea12b"
+    },
+    {
+      "path": "scripts/diagnostics/collect.ps1",
+      "bytes": 3120,
+      "sha256": "b281a5fe0f0bc4e62662cc3e27f499cef10a6246dbab582ac52eca66d8e5d36a"
+    },
+    {
+      "path": "scripts/diagnostics/known-build.json",
+      "bytes": 200,
+      "sha256": "a75e65478a15717b29a0b625c8f96e8779c8e8e6b0f9f2d40ceaafcf7bcec032"
+    },
+    {
+      "path": "scripts/diagnostics/使用说明.txt",
+      "bytes": 577,
+      "sha256": "e9e8048bb34d70fe2b6d1f49c97bd70958d5a4e1167fa4c3f250090de9e6febb"
+    },
+    {
+      "path": "scripts/diagnostics/双击诊断.cmd",
+      "bytes": 120,
+      "sha256": "10cfe365d1de1e636ff2ea9ecaa9a5ddfc4d1fa2657618e6d9990d074a2de33d"
+    },
+    {
       "path": "scripts/import-attachments.mjs",
       "bytes": 589,
       "sha256": "618599a93900af8828163792d20358fccee39c613f8f21e69f1eb6cd76d62cf0"
     },
     {
+      "path": "scripts/prepare-isolated-tts.mjs",
+      "bytes": 3482,
+      "sha256": "2e1e9942cf57b6baecc250168e7b40366fd796632d019e5afe76b226d85b9db4"
+    },
+    {
+      "path": "scripts/prepare-local-plugins.mjs",
+      "bytes": 2020,
+      "sha256": "8afb9c7f9ab5bd4d43af06c50bcfce593e72a3229c9c185d01775bbdd6281041"
+    },
+    {
       "path": "scripts/prepare-source.mjs",
-      "bytes": 3488,
-      "sha256": "9e721cfef67ce102ef279593543345a572222960c7cc8bf999ee82f021eec667"
+      "bytes": 3680,
+      "sha256": "cbd8f9554e0cd1256c0402dc1bd0e83b88456b48af3ff765e70f288ddef1a834"
     },
     {
       "path": "scripts/restore-local-backup.mjs",
@@ -946,13 +1616,13 @@
     },
     {
       "path": "scripts/source-policy.mjs",
-      "bytes": 1908,
-      "sha256": "b47f02fc7edafd3bfcd1190f01a9c02836224832deeffe7bb9b23a8c60defe9c"
+      "bytes": 2523,
+      "sha256": "354e358431815e41db8aaaa28f7f0cf55e0428761e571b6a1c4d1cc6be7ab91b"
     },
     {
       "path": "scripts/start-bridge.mjs",
-      "bytes": 1112,
-      "sha256": "c00e6229e50a50c11611e52b1f2b644df32b1ce583e5b26a2c48046edc45a9a2"
+      "bytes": 1177,
+      "sha256": "a62db8b4816b3263575c918492dc0be3e38f05f95685242296e8053050b70afc"
     },
     {
       "path": "scripts/start-standby.mjs",
@@ -965,14 +1635,29 @@
       "sha256": "9dbd676cac066fe00daf3c1ad543187a820ffa487611850b671d633a7325406a"
     },
     {
+      "path": "scripts/windows-installer.nsi",
+      "bytes": 6067,
+      "sha256": "49b4e76e97efe3f64bda1fb69601aef121a7630a0b27b954b0b874f89b0ba50b"
+    },
+    {
       "path": "SECURITY.md",
       "bytes": 1007,
       "sha256": "e95dfe096bfcd5fd54cfe92755d75e282690e7ee7aeac9289dabbface61e0c91"
     },
     {
+      "path": "test/android-attachment-selection.test.mjs",
+      "bytes": 2919,
+      "sha256": "516a27f103fb84051fe5b9fb0dc07c672cba114b2db92839be5c395176ce8c5a"
+    },
+    {
+      "path": "test/android-background.test.mjs",
+      "bytes": 7965,
+      "sha256": "f6c205b39c52becedacb1ef972f5dfb89318665dcd48ace8d783ea9279a8c50f"
+    },
+    {
       "path": "test/android-chat-ui.test.mjs",
-      "bytes": 9312,
-      "sha256": "86f85a9270e679b1eab0fb57d053b3dfc1933d6150a3367c407a32e725b6fc36"
+      "bytes": 14244,
+      "sha256": "d140cb7abeaba3c677f818127b9b5767eeb652a8e547dd0fa37c129bb92aeaa5"
     },
     {
       "path": "test/android-hold.test.mjs",
@@ -1016,13 +1701,18 @@
     },
     {
       "path": "test/automatic-music.test.mjs",
-      "bytes": 1714,
-      "sha256": "60a51fd11094996aa640daac81b19aac8de40e1251ac083a07fc0bfaec076568"
+      "bytes": 3863,
+      "sha256": "2cc5f9eb66eb426051c0d6172bf7c39f3c82fd10d7cd6820285eb93d3e7e5a39"
     },
     {
       "path": "test/backup-coordinator.test.mjs",
       "bytes": 2757,
       "sha256": "03a00a313fabc4a73969af87f67f973559a1cd77844150f039aca198ae99dde1"
+    },
+    {
+      "path": "test/basic-speech.test.mjs",
+      "bytes": 10966,
+      "sha256": "51bcf0d5ce2d9a75f8ceaeca4a83bc1cfc46037b54e13dccf55b4a190c9c7f8f"
     },
     {
       "path": "test/bili-source.test.mjs",
@@ -1050,6 +1740,26 @@
       "sha256": "b8b1cbe2a7ebe413f9a1ab42c30be53d5786910f61c2c7e84f2e0b75c906eb7f"
     },
     {
+      "path": "test/chat-continuity.test.mjs",
+      "bytes": 11446,
+      "sha256": "9b66162552930fb733c662a466a67364f59378c58e13242533a3be5e1ddb1d7f"
+    },
+    {
+      "path": "test/chat-deletion.test.mjs",
+      "bytes": 6583,
+      "sha256": "de21e61d8bfa5973cf2ce3e7814339c44260602f0142ab9f9a4acbedb68b2ba2"
+    },
+    {
+      "path": "test/chat-dispatch.test.mjs",
+      "bytes": 7532,
+      "sha256": "69665914335db416229d8753486e40f8aef883abadb9f52e9f304eee37f3ade5"
+    },
+    {
+      "path": "test/chat-prompt.test.mjs",
+      "bytes": 2582,
+      "sha256": "3acc563ff8c83864d6169765d1491bf01fe94eec3c0cf41112e99623faa32068"
+    },
+    {
       "path": "test/chat-spaces.test.mjs",
       "bytes": 4890,
       "sha256": "1b9deab4f2004214f4f7d6f5c74e014bb8885e4e794a5ceb29e2a994fdf8af62"
@@ -1061,13 +1771,13 @@
     },
     {
       "path": "test/client-preferences.test.mjs",
-      "bytes": 9697,
-      "sha256": "2a2516dd7598f43b36d60b38e0d8201070b0f23a7a1a0119c88750ac53ee5276"
+      "bytes": 9885,
+      "sha256": "7f2d6e8517d4b5dc09eb1163193c3367fdfcb97ef19c77bf6c6655383326dac6"
     },
     {
       "path": "test/client-state.test.mjs",
-      "bytes": 25044,
-      "sha256": "c16750043dbb9f5e3127be8d5cce169de755107af732d82bfdbc4c32192b73d1"
+      "bytes": 32894,
+      "sha256": "7b2d92ec7cb295d9ac4faf95d903a9884a82221800651d960013e5a06822767f"
     },
     {
       "path": "test/companion.test.mjs",
@@ -1075,14 +1785,44 @@
       "sha256": "e211bd6e41483cc42e567ae84991172fe76d0e3137dc732931226e6be1438ab5"
     },
     {
+      "path": "test/complete-daily-backup.test.mjs",
+      "bytes": 7708,
+      "sha256": "bf0bf1e72cccf64ddecaee63f9e55e92e8773df4ed9aa9aa8ab66518e067254d"
+    },
+    {
+      "path": "test/course-query-context-sdk.test.mjs",
+      "bytes": 1663,
+      "sha256": "39cb3bf476800cdf0c0539947186cef78c9a26a5eb4e8dd695dc0bd692003f06"
+    },
+    {
+      "path": "test/course-query-context.test.mjs",
+      "bytes": 8314,
+      "sha256": "e95a3fa5003010941be5dfd34a87b92dc78553bebf32139743484fb938907c9f"
+    },
+    {
+      "path": "test/course-query-reply.test.mjs",
+      "bytes": 2613,
+      "sha256": "9042fcba739b09b5de00c551d3a4a3865f4234cd45e8e8e74b2effcda87724cd"
+    },
+    {
       "path": "test/course-timetable.test.mjs",
       "bytes": 6120,
       "sha256": "cbecf63b4e5f47600d65539b58a9c34b62afb1141d1b83c2c1281a2e89a7bd98"
     },
     {
+      "path": "test/desktop-bootstrap.test.mjs",
+      "bytes": 4404,
+      "sha256": "04cafe1a15cdcb32d9cc2a3787ef69b6fc527a64ab65175d3682e76a8d42d553"
+    },
+    {
+      "path": "test/desktop-installed.test.mjs",
+      "bytes": 3987,
+      "sha256": "a97f55efab2d577303581c1db6d4f6c99ac597ba6d65e5f27983d2157fdfc85e"
+    },
+    {
       "path": "test/desktop-tray.test.mjs",
-      "bytes": 6673,
-      "sha256": "4485b0ed405f11ddb6ed3d4cf67073ed1a43745dd51f7954ff22608a687de73f"
+      "bytes": 7614,
+      "sha256": "57782edc8b79ba0fa46c3b80dc9670e24d6cd2fcfef292c25b8fbd9bfbdc83cc"
     },
     {
       "path": "test/device-tls.test.mjs",
@@ -1095,14 +1835,59 @@
       "sha256": "5539bcba6aaed548acc514e25c579ed9b4dbed0a203850635fa290e9e57d75b8"
     },
     {
+      "path": "test/diagnostics.test.mjs",
+      "bytes": 8483,
+      "sha256": "80eaa45133521d6af42513a1cda5611e60636411825540f949048a0795e49d64"
+    },
+    {
       "path": "test/diy-plugins.test.mjs",
-      "bytes": 5900,
-      "sha256": "0a9182106be98e805bbc5c48817cce63c4e78bfb76b7fe94418bad80ca69beb2"
+      "bytes": 6969,
+      "sha256": "b199bf3b1c9c4268030f721fa2390ea9521644e94a3f24dcfdf840ae46cb95ad"
     },
     {
       "path": "test/dsh-bridge.test.mjs",
-      "bytes": 7020,
-      "sha256": "4167711b0e22342a8b3e87871e4a2678070e8d70d9b5d0612a785074a31b91a1"
+      "bytes": 15536,
+      "sha256": "5c159a8df53819fd1c54fab1ed8ef47abcd4581d165dca2026bc1da66ea0201c"
+    },
+    {
+      "path": "test/dsh-prompt-compat.test.mjs",
+      "bytes": 1303,
+      "sha256": "a6a80ae2e5fb8897b6c5c5a2f36808d34ed19c7befc0aa739d41160d4f5940c9"
+    },
+    {
+      "path": "test/empty-thinking.test.mjs",
+      "bytes": 5667,
+      "sha256": "7e3db1eedb5995ca3792534e63c21c78b42e85d206b5bd1d731236121f9c10a1"
+    },
+    {
+      "path": "test/experience-backup-stop.test.mjs",
+      "bytes": 15337,
+      "sha256": "116e8166a2b25da50b1f6c868291404a87ddf165fda4c6a7571d0cf4a18d55f3"
+    },
+    {
+      "path": "test/fixtures/chat-continuity-fish.mjs",
+      "bytes": 1815,
+      "sha256": "afb4967e35c026da8650b3f6c312e954c21128bbe9463df1f3aacafd8260f355"
+    },
+    {
+      "path": "test/fixtures/chat-deletion-sdk.mjs",
+      "bytes": 8904,
+      "sha256": "e51ae42e12c63bcf1f024462b110230cb9989e902e0dcb1e95fac2c3e97523be"
+    },
+    {
+      "path": "test/fixtures/chat-dispatch-sdk.mjs",
+      "bytes": 3585,
+      "sha256": "92806418b328b407390d72be4fcaa5cbe7fc811fb14c97438294c41337ef0f1c"
+    },
+    {
+      "path": "test/fixtures/course-query-context-sdk.mjs",
+      "bytes": 17399,
+      "sha256": "7c5472c866680f6938a83ea8a95241631a60c2e52aa1d1ec5401db90f7a5b8b2"
+    },
+    {
+      "path": "test/fixtures/dsh-prompt-compat.mjs",
+      "bytes": 4093,
+      "sha256": "57c3a6a6207b952936c871d8b19e5883d2a71e18a0a35c045ecc132ce9d66ad6"
     },
     {
       "path": "test/fixtures/legacy-antigravity-sdk.mjs",
@@ -1110,9 +1895,29 @@
       "sha256": "374adb9c4c1c062ea9902d37a242a387da5d9dad59fe16dae3876d3eb945905a"
     },
     {
+      "path": "test/fixtures/reminder-context-sdk.mjs",
+      "bytes": 17364,
+      "sha256": "96aef81cf851ee66b4c3a1301e414f7aa3b8848b8d2bd72ffd66e91ddf951672"
+    },
+    {
+      "path": "test/fixtures/shared-workspace-sdk.mjs",
+      "bytes": 6581,
+      "sha256": "ae2137234dac827268996e8bdbac6ae46ce1eb70e3fbf4a16c8d9b301afb0fa0"
+    },
+    {
+      "path": "test/gif-frames.test.mjs",
+      "bytes": 2071,
+      "sha256": "9a57e9010a45fdb639a8e77a9aa19fcafef612e40ff5703528775b4419edefc3"
+    },
+    {
       "path": "test/helpers.mjs",
       "bytes": 1614,
       "sha256": "d0fd730b325d1bbfd127106e2c43f87768f42d99857897045dc2cd55ffb74272"
+    },
+    {
+      "path": "test/image-attachments.test.mjs",
+      "bytes": 6645,
+      "sha256": "66234a121a7d11d19561570320416e941cd1e1bf099c1f7c6e8b49b652a2e755"
     },
     {
       "path": "test/import.test.mjs",
@@ -1126,13 +1931,28 @@
     },
     {
       "path": "test/isolated-tts.test.mjs",
-      "bytes": 3507,
-      "sha256": "368fd0b94aefd29416662849e84b25b32b6711a0101d17d5c1a6d4f903067a3a"
+      "bytes": 4872,
+      "sha256": "9cfab6645ac61f8363d497a77e5202d2d236e05d6ec398fc6c0fa5c2397821cd"
     },
     {
       "path": "test/legacy-antigravity.test.mjs",
       "bytes": 3619,
       "sha256": "3c2794798830a3c19172ddc98af1698565513577e3776c1b4428b8a2535f6370"
+    },
+    {
+      "path": "test/local-plugin-source.test.mjs",
+      "bytes": 1671,
+      "sha256": "48139649c11f4f5f0be6c1c8e718055357deef2877be57404d51f5562af77d7c"
+    },
+    {
+      "path": "test/media-connections.test.mjs",
+      "bytes": 7999,
+      "sha256": "bc3d69f7b4fba2a107d500cb9c45e039cba745e189d6a6e262f37dba04466fe1"
+    },
+    {
+      "path": "test/media-source.test.mjs",
+      "bytes": 3301,
+      "sha256": "f4b6577d9925a7f43864563a69aa5775d2e6429eacae93c110e771d3c6914c64"
     },
     {
       "path": "test/migration-integrity.test.mjs",
@@ -1145,6 +1965,21 @@
       "sha256": "386161833711e54510f2492e85cc8fecf046502262897cdc6db403673ee22825"
     },
     {
+      "path": "test/music-candidates.test.mjs",
+      "bytes": 1705,
+      "sha256": "cc35bfa2a265635d4c41328492289d414f9350caba1b3bc76c460e36f2847863"
+    },
+    {
+      "path": "test/music-recovery.test.mjs",
+      "bytes": 3541,
+      "sha256": "ccebc3f00a2cd43a74a600779c270831acea229d4a76cbafd963e0f121ee3626"
+    },
+    {
+      "path": "test/music-settings.test.mjs",
+      "bytes": 3195,
+      "sha256": "8bdb0142c448a2a44aa438d8183b44d924de15a5640e06226110a6d49f94ef29"
+    },
+    {
       "path": "test/native-backup-integrity.test.mjs",
       "bytes": 5232,
       "sha256": "42ab14a38e29880f2b9173c02ce5ddb7cf756379ad1611c383d3d716451ad1ae"
@@ -1155,9 +1990,19 @@
       "sha256": "096a1f49e64b86dad7691f4ee290e638a4258f8393b8704b5404026495470b97"
     },
     {
+      "path": "test/persona-deletion.test.mjs",
+      "bytes": 5101,
+      "sha256": "1d5a8579c70d1c41fa9c88b6d30aedd9d2c2d85779dcd6f24f23321b47bbaefc"
+    },
+    {
+      "path": "test/plugin-generation.test.mjs",
+      "bytes": 3048,
+      "sha256": "1d5b5d663335c4af72505ec8fe8e31be99a009465581535954969a18d66ff0a4"
+    },
+    {
       "path": "test/plugin-pages-policy.test.mjs",
-      "bytes": 5287,
-      "sha256": "1be745690472bc922da54d7d09d166295d89c4d9adf275d1dccd5a5c7eba7a4c"
+      "bytes": 10223,
+      "sha256": "e356ce2db4afbb2c808cb1cff3ad5694f5efd0d68334e0b9043a302d4059af3d"
     },
     {
       "path": "test/policies.test.mjs",
@@ -1168,6 +2013,11 @@
       "path": "test/portable-timeline.test.mjs",
       "bytes": 9531,
       "sha256": "61d1edbba532492da0b71cd8e79c4695b964041230aa49e54e3906f0cd9c20b9"
+    },
+    {
+      "path": "test/proactive-service.test.mjs",
+      "bytes": 4170,
+      "sha256": "b9668f15f047e3191d96abeb1c53886160c32e3da639d26e5cabd063ee67e524"
     },
     {
       "path": "test/proactive.test.mjs",
@@ -1181,8 +2031,8 @@
     },
     {
       "path": "test/profile-voice-refinements.test.mjs",
-      "bytes": 6346,
-      "sha256": "a20fbca30e64eb1dab2d1cc4e6012a5557d9dba5bcfa367e1243865b9cac0ea5"
+      "bytes": 7358,
+      "sha256": "8b5fcbbf4e3a1b81cc965b8c7647cec7d694a8e61cc69b472fe3eb228cff8fb4"
     },
     {
       "path": "test/profiles.test.mjs",
@@ -1190,9 +2040,29 @@
       "sha256": "527298c8bd26be4167731f230aacdcf554f0fcedee9e5e3ea86a57fcf2ae702d"
     },
     {
+      "path": "test/queue-recovery.test.mjs",
+      "bytes": 6630,
+      "sha256": "a4a282537f822092544535d07692efd67c2de196e88847ce4841aa5f899ebb16"
+    },
+    {
+      "path": "test/reminder-context-sdk.test.mjs",
+      "bytes": 1613,
+      "sha256": "fd0bcb10f2dbaca0baf62439b4835c9b160a36496a4576307f02ee569487fd14"
+    },
+    {
+      "path": "test/reminder-context.test.mjs",
+      "bytes": 9988,
+      "sha256": "f743fb3b7d4377ffb70c08c375ac8563e64cb533939ff72d000ff3d7b7aaec72"
+    },
+    {
       "path": "test/reply-arrival.test.mjs",
       "bytes": 2463,
       "sha256": "d52a0d9c3af5def97276e3bb34789b5ba3b694ec00b788b2c90de9af6e8d7ddc"
+    },
+    {
+      "path": "test/reply-control.test.mjs",
+      "bytes": 8404,
+      "sha256": "f7f0a8b8e65dfe5aff1c6892598c02be3b9b4f26535047ea9e61076978168702"
     },
     {
       "path": "test/runtime-backup.test.mjs",
@@ -1201,8 +2071,8 @@
     },
     {
       "path": "test/service.test.mjs",
-      "bytes": 12491,
-      "sha256": "4cbfd3a3493a985f9efcbc633eff142b750060b3e61462275ae3b526df9ff071"
+      "bytes": 12473,
+      "sha256": "25db2f03c84424b2ecac5fd9a34142d8bc4e5c375e291776b905af65847f7959"
     },
     {
       "path": "test/session-tools.test.mjs",
@@ -1210,14 +2080,34 @@
       "sha256": "3a21b71c76a902d6fb819f2ad967d4dc8cd4f44bd61e77f233c9dcdeec5ac270"
     },
     {
+      "path": "test/shared-workspace.test.mjs",
+      "bytes": 1621,
+      "sha256": "6004d185db57bd272fd53a370e351e6665a20bd2dad214699ea7194641c5a7bc"
+    },
+    {
+      "path": "test/singing-recovery.test.mjs",
+      "bytes": 9446,
+      "sha256": "a709bc9df230bc02706fd26b74e053831fc454521b63bcdfdf9bccc012bd9e66"
+    },
+    {
       "path": "test/source-policy.test.mjs",
-      "bytes": 1589,
-      "sha256": "3989ca1120676d24abbfdff65b01f5ad60d69296db44d84a402dd9acf319fa7d"
+      "bytes": 1838,
+      "sha256": "6adf2760092c256bfae5947de22338d9b5d7b7c1cc5e6f57d43dac93c8e8d836"
+    },
+    {
+      "path": "test/stickers.test.mjs",
+      "bytes": 9084,
+      "sha256": "862007e53d5438c6322807ed7cfa740104e79f1d6ac238d38495817fa62ab621"
     },
     {
       "path": "test/sync-mode.test.mjs",
       "bytes": 4772,
       "sha256": "ca2226bd2ad6f594008f31b9068d4ce23fda6402a68cb519b569b4e894b7c141"
+    },
+    {
+      "path": "test/system-voice.test.mjs",
+      "bytes": 12851,
+      "sha256": "5cf71cd6eb8dbecdda0f0dcc210c015c37700e751f0d77bb8fbe3a7a990abc20"
     },
     {
       "path": "test/tool-catalog.test.mjs",
@@ -1230,19 +2120,39 @@
       "sha256": "5d5bb4ce1a8102454d88cc96ac1248bbe6f46ac3256a29ff0eaa1cc0cd4b37f0"
     },
     {
+      "path": "test/video-failed-rounds.test.mjs",
+      "bytes": 3682,
+      "sha256": "9cf86abf4387e935be233c80df9af23d359312aac9cb433c0a8250f50328f76d"
+    },
+    {
+      "path": "test/video-feeling-style.test.mjs",
+      "bytes": 1836,
+      "sha256": "faf23494ca30ba854f759d74ba57ff5f12bbbf043bcadb9b8d774a6bbfe389d8"
+    },
+    {
+      "path": "test/video-selection-budget.test.mjs",
+      "bytes": 1564,
+      "sha256": "29b2f006f019fbf60807ac46016fbbb141d7651d4d44485f054337219de6774c"
+    },
+    {
       "path": "test/voice-controls.test.mjs",
       "bytes": 6484,
       "sha256": "11f90a12190bd04ef3c108a935bd59f2879b4ee2a695363fe77d0c038431b22d"
     },
     {
+      "path": "test/voice-followup.test.mjs",
+      "bytes": 3384,
+      "sha256": "a7dd7a0fb4465aa4a7f55fd16b24e691d9454beb3cae5776a3c478766d5db776"
+    },
+    {
       "path": "test/voice-presentation.test.mjs",
-      "bytes": 3008,
-      "sha256": "f9e05561c760df47a37ba74411e5ff6efc264e7a37c293140a3ea2e7c7d1bfe5"
+      "bytes": 3986,
+      "sha256": "4fbda47fde586cdfc18f6787dab7f01161058341188b8b783634ee3fc3d918d0"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
-      "bytes": 3465,
-      "sha256": "5d82926deb0d5cd33f5ac8c4ac971bbcdcf515b43f131a6d0e6244e11169fc6d"
+      "bytes": 9961,
+      "sha256": "0fd771192bc7528d702a0db5ae5265c607f0c8741e7354e0fed179aeeb5a7cce"
     },
     {
       "path": "workspace.example.json",
@@ -1250,5 +2160,5 @@
       "sha256": "4ad5e26e4707945806971f0ca9b9a6496e0a61b87f52c3e7049530e555327685"
     }
   ],
-  "treeHash": "ca35677bf2c6dadc120a2c722b62b4d1f33f766fcbfd9cc2ae6a6d0f1bcbe58c"
+  "treeHash": "1910d55bee07462d5fa4c8e3608a29ab6adc3e2e8d2a7b9e1118532570a27b15"
 }

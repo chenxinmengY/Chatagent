@@ -1,6 +1,6 @@
 {
   "name": "chatagent-local",
-  "version": "0.4.4",
+  "version": "0.4.9",
   "private": true,
   "type": "module",
   "engines": {

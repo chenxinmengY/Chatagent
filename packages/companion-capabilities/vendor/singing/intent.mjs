@@ -16,25 +16,34 @@ function span(text) {
   if(length)return {start:0,end:Number(length[1])*(length[2]==='秒'?1:60),invalid:/(?:最后|末尾|后)\s*\d/.test(text)};
   return null;
 }
-export function parseInvitation(row, {proposal,selected,now=Date.now()}={}) {
+export function parseInvitation(row, {proposal,selected,pending,previousRequest,now=Date.now()}={}) {
   const text=row?.text;
   if(row?.outgoing || row?.forwardedRecord || row?.quoteReply || row?.interaction==='pat' || typeof text!=='string' || text.length>4000 || stopIntent(text) || unsafe(text)) return null;
   const createdAt=Number(row.timestamp)*1000;
   if(!row.message_id || !Number.isFinite(createdAt) || createdAt>now+5000 || now-createdAt>90000) return null;
+  const ids=[...new Set(text.match(BV)??[])];
+  const wantsListen=/(?:我(?:还)?想听|还想听|想再听)/.test(text)&&!/[?？]|唱|原曲|播放|听歌工具|听.*吗/.test(text);
+  // A fresh request for the exact song previously ordered in this chat can
+  // omit "唱". Ordinary listening requests without that context stay separate.
+  const pendingValid=pending?.needsSelection&&!pending.bvid&&!pending.reason&&Number.isFinite(pending.createdAt)&&pending.createdAt<=createdAt&&now-pending.createdAt<=300000;
+  const listeningReference=pending?(pendingValid?pending:null):previousRequest?.bvid===ids[0]?previousRequest:null;
+  const contextualListen=ids.length===1&&wantsListen&&!!listeningReference;
+  const selection=text.replace(/https?:\/\/(?:www\.)?bilibili\.com\/video\/(BV[1-9A-HJ-NP-Za-km-z]{10})(?:[/?#][^\s]*)?/g,'$1').replace(BV,'BV');
+  if(ids.length===1&&pendingValid&&/^\s*(?:就是|那就|就|选|用|是)?(?:这首|这个|这一首|这个版本)?歌?[啦吧呀啊哦呢的，,:：\s]*BV[啦吧呀啊哦呢的。！!，,\s]*$/.test(selection))return {...pending,bvid:ids[0],needsSelection:false,messageId:String(row.message_id),createdAt};
   const remake=/重做一版|重新做一版/.test(text);
-  const explicit=/(?:给我唱|唱给我|帮我唱|翻唱|试唱|唱一下|唱一首|唱这首|唱首|唱一段|唱段|想听你唱|想听你.*唱|来一段.*唱|(?:能不能|可不可以|可以|能否).*唱|^\s*唱(?:\s|BV|https?:))/.test(text)||remake;
+  const explicit=/(?:用(?:满穗|绯羽|原音色)(?:的?音色)?(?:来)?唱|(?:^|[，,\s])(?:满穗|绯羽)(?:来)?唱|给我唱|唱给我|帮我唱|翻唱|试唱|唱一下|唱一首|唱这首|唱首|唱一段|唱段|想听你唱|想听你.*唱|来一段.*唱|(?:能不能|可不可以|可以|能否).*唱|^\s*唱(?:\s|BV|https?:))/.test(text)||remake||contextualListen;
   const consent=/^\s*(?:好[的呀啊]?|可以|行|嗯|那就|同意)[，,\s]*(?:(?:你)?(?:唱吧|唱|开始吧|开始|来吧|试试吧))?[。！!]?\s*$/.test(text);
   if(!explicit && !(consent && proposal && Number.isFinite(proposal.createdAt) && proposal.createdAt<=now+5000 && now-proposal.createdAt<=300000)) return null;
-  const ids=[...new Set(text.match(BV)??[])];
   const requested=span(text);
   const rangeOnly=requested&&/^(?:那就[，,\s]*)?(?:给我|帮我)?(?:翻唱|试唱|唱)(?:一下|一段)?\s*(?:前|第)?[\d\s:：.\-–—~～至到分秒钟]+(?:的片段)?(?:吧|给我听)?[。！!]?\s*$/.test(text);
   const bvid=ids.length===1?ids[0]:ids.length===0?(consent?proposal?.bvid:remake||rangeOnly||/这首|这个版本|刚才那首|刚刚那首/.test(text)?selected?.bvid:null):null;
-  let mode=requested||/片段|一段|唱段|试唱|时间段/.test(text)?'clip':consent?(proposal.mode??'whole'):remake?(selected?.mode??'whole'):'whole';
+  let mode=requested||/片段|一段|唱段|试唱|时间段/.test(text)?'clip':contextualListen?(listeningReference.mode??'whole'):consent?(proposal.mode??'whole'):remake?(selected?.mode??'whole'):'whole';
   let start=0,end=25;
   if(requested){start=requested.start;end=requested.end;}
+  else if(contextualListen && mode==='clip'){start=listeningReference.start??0;end=listeningReference.end??25;}
   else if(consent && mode==='clip'){start=proposal.start??0;end=proposal.end??25;}
   else if(remake && mode==='clip'){start=selected.start??0;end=selected.end??25;}
-  if(mode==='clip' && (requested?.invalid||!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end-start>300||end>300)) return {needsSelection:true,reason:'clip_range',messageId:String(row.message_id),createdAt};
+  if(mode==='clip' && (requested?.invalid||!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end-start>600||end>600)) return {needsSelection:true,reason:'clip_range',messageId:String(row.message_id),createdAt};
   return {bvid:bvid??null,needsSelection:!bvid,messageId:String(row.message_id),createdAt,mode,...(mode==='clip'?{start,end}:{}),remake:/重做|重新做|再做一版/.test(text)};
 }
 export function outgoingProposal(rows, now=Date.now()) {
@@ -47,7 +56,7 @@ export function outgoingProposal(rows, now=Date.now()) {
     if(ids.length!==1 || /[“”「」『』"]|引用|转发|他说|她说|假设|示例|如果|假如|不可以|不想唱|不愿唱|不会唱|不能唱|没说要唱|功能|代码/.test(text) || !/唱|翻唱/.test(text) || !/要不要|想不想|可以.*唱|我.*唱.*(?:吗|好不好|怎么样)|给你唱.*(?:吗|好不好)/.test(text)) return null;
     const createdAt=Number(row.timestamp)*1000;
     const range=span(text);
-    if(range&&(range.invalid||!Number.isFinite(range.start)||!Number.isFinite(range.end)||range.start<0||range.end<=range.start||range.end>300))return null;
+    if(range&&(range.invalid||!Number.isFinite(range.start)||!Number.isFinite(range.end)||range.start<0||range.end<=range.start||range.end>600))return null;
     return Number.isFinite(createdAt)&&createdAt<=now+5000&&now-createdAt<=300000?{bvid:ids[0],createdAt,mode:range||/一段|片段|试唱/.test(text)?'clip':'whole',...(range?{start:range.start,end:range.end}:{})}:null;
   }
   return null;

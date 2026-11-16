@@ -2,6 +2,8 @@ import {chatFetch,chatId,chatUrl} from './chat-scope.js';
 import { BubbleArrival } from './bubble-arrival.js';
 import { outboxAction } from './outbox.js';
 import { hiddenVoiceNotice, displayedText } from './message-presentation.js';
+import {imageAttachments} from './image-attachments.js';
+import {stickerPicker} from './stickers.js';
 
 const $ = id => document.getElementById(id);
 async function startChat() {
@@ -29,7 +31,7 @@ async function startChat() {
     }).catch(error => { throw new Error('LOCAL_SAVE_FAILED', { cause: error }); });
   }
   let state = await access('readonly', store => store.get('main')) ?? { deviceId: crypto.randomUUID(), epoch: null, cursor: 0, messages: [], outbox: [], draft: '' };
-  let token = null, refreshJob = null, submitting = false, fileBusy = false, mediaModel = false, connected = false, renderKey = '';
+  let token = null, refreshJob = null, submitting = false, fileBusy = false, mediaModel = false, connected = false, renderKey = '', scrollAfterSend = false;
   let searchActive = false, timelineCursor = null, timelineGeneration=0;
   let historyRows = [], historyPageBefore = null, commitQueue = Promise.resolve();
   // 网络等待不占本机提交队列；只有已提交的副本才能被刷新或发送循环读取。
@@ -47,15 +49,16 @@ async function startChat() {
       return true;
     });
   }
-  const labels = { queued: '已保存 · 等待处理', awaiting_confirmation: '积压超过时限 · 等待确认', running: '正在处理', completed: '已完成', unknown: '结果待核对 · 不会自动重试', cancelled: '已取消', failed: '处理失败' };
+  const labels = { queued: '已保存 · 等待处理', awaiting_confirmation: '待发消息需要确认', running: '正在处理', completed: '已完成', unknown: '结果待核对 · 不会自动重试', cancelled: '已取消', failed: '处理失败' };
   const errors = { LOCAL_SAVE_FAILED: '本机保存未完成，请保留此窗口中的内容后重试。', MESSAGE_STATE_CHANGED: '消息状态已改变，请刷新后查看。', MESSAGE_ID_REUSED: '消息编号冲突，原消息已保留。', AUTH_REQUIRED: '连接已更新，正在重新连接。', INVALID_MESSAGE: '消息或时间无效，请检查内容和电脑时间。', MODE_CHANGED: '聊天连接已变化，请核对待发消息后确认补发。', MODE_EXPECTATION_REQUIRED: '请核对这条待发消息后确认补发。', ARCHIVE_CHANGED: '资料已恢复或切换，正在重新核对消息。' };
+  errors.ATTACHMENT_BUSY = '图片正在保存或发送，请稍等一下再粘贴。';
   errors.BACKUP_IN_PROGRESS = '正在备份，消息已保留在本机，备份完成后会继续同步。';
   Object.assign(errors, { LOCAL_FILE_MISSING: '本机附件副本缺失，请重新选择同一个文件后重试。', FILE_LIMIT: '每条消息最多8个文件，每个文件不超过64 MiB。', ATTACHMENT_HASH_MISMATCH: '附件完整性校验失败，文件未被接纳。', ATTACHMENT_OBJECT_DAMAGED: '电脑上的附件校验失败，未下载损坏内容。', FILE_CACHE_DAMAGED: '本机附件缓存校验失败，未打开损坏内容。' });
   function showError(error) { $('error').textContent = errors[error.message] ?? '操作未完成，内容已保留。请检查本地服务后重试。'; $('error').hidden = false; }
   async function api(route, body) {
     const response = await chatFetch(route, { signal: AbortSignal.timeout(15000), method: body === undefined ? 'GET' : 'POST', headers: { 'X-Chatagent-Token': token ?? '', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     const result = await response.json();
-    if (!response.ok) { if (response.status === 401) token = null; throw new Error(result.error); }
+    if (!response.ok) { if(result.error==='CHAT_DELETED'){location.replace('/chats');throw new Error('此对话已删除');} if (response.status === 401) token = null; throw new Error(result.error); }
     return result;
   }
   const fileHash = async blob => [...new Uint8Array(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer()))].map(byte => byte.toString(16).padStart(2, '0')).join('');
@@ -93,6 +96,18 @@ async function startChat() {
     }
     return true;
   }
+  const picker=stickerPicker({root:$('sticker-panel'),button:$('open-stickers'),api,showError,
+    load:async sticker=>{const response=await chatFetch('/v1/stickers/'+sticker.id+'/content',{headers:{'X-Chatagent-Token':token??''},signal:AbortSignal.timeout(15000)});if(!response.ok)throw Error('STICKER_LOAD_FAILED');return response.blob();},
+    send:async sticker=>{
+      const {sticker:_,...file}=await api('/v1/stickers/'+sticker.id+'/use',{});
+      await change(next=>{next.outbox.push({clientMessageId:crypto.randomUUID(),text:'',files:[file],queuedAt:Date.now(),epoch:next.epoch,hold:false,expectedMode:next.mode,expectedModeRevision:next.modeRevision});});scrollAfterSend=true;render();await refresh();
+    },
+    importFiles:async selected=>{
+      if(fileBusy||submitting)throw Error('FILE_IMPORT_BUSY');fileBusy=true;render();
+      try{for(const file of selected){if(file.size>64*1024*1024)throw Error('FILE_LIMIT');const sha256=await fileHash(file),metadata={id:crypto.randomUUID(),name:file.name,bytes:file.size,sha256};await access('readwrite',store=>store.put(file.slice(0,file.size,'application/octet-stream'),sha256),'files');await uploadFiles({files:[metadata]},()=>true);await api('/v1/stickers',{attachmentId:metadata.id,caption:file.name.replace(/\.[^.]+$/,'').slice(0,500)});}}
+      finally{fileBusy=false;render();}
+    }});
+  window.addEventListener('pagehide',()=>picker.close(),{once:true});
   async function loadFile(file) {
     let blob = await access('readonly', store => store.get(file.sha256), 'files');
     if (!blob) {
@@ -108,6 +123,9 @@ async function startChat() {
     const url = URL.createObjectURL(await loadFile(file)), link = document.createElement('a'); link.href = url; link.download = file.name; link.click();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
+  const images=imageAttachments({root:$('messages'),loadFile,downloadFile,showError});
+  const draftImages=imageAttachments({root:$('draft-files'),loadFile,downloadFile,showError});
+  window.addEventListener('pagehide',()=>{images.close();draftImages.close();});
   function mergeRows(previous, incoming) {
     const rows = new Map(previous.map(row => [row.id, row]));
     for (const row of incoming) if (!rows.has(row.id) || (rows.get(row.id).revision ?? 0) <= (row.revision ?? 0)) rows.set(row.id, row);
@@ -134,17 +152,22 @@ async function startChat() {
     $('send').disabled = submitting || fileBusy;
     $('choose-file').disabled = submitting || fileBusy;
     $('file-input').disabled = submitting || fileBusy;
-    const visibleRows = (searchActive ? historyRows : mergeRows(historyRows, state.messages)).filter(row => !hiddenVoiceNotice(row));
-    const key = JSON.stringify([visibleRows, state.outbox, state.draftFiles, state.audioTranscripts, mediaModel, fileBusy, [...players.keys()]]); if (key === renderKey&&!arrivals.ready(Date.now())) return; renderKey = key;
+    const visibleRows = (searchActive ? historyRows : mergeRows(historyRows, state.messages)).filter(row => !hiddenVoiceNotice(row) && (row.role !== 'assistant' || displayedText(row).trim() || row.attachments?.length));
+    const key = JSON.stringify([visibleRows, state.outbox, state.draftFiles, state.audioTranscripts, mediaModel, fileBusy, [...players.keys()]]); if (key === renderKey&&!scrollAfterSend&&!arrivals.ready(Date.now())) return; renderKey = key;
     $('draft-files').replaceChildren();
+    const draftImageKeys=new Set();
     for (const file of state.draftFiles ?? []) {
       const line = document.createElement('div'); line.className = 'draft-file';
       const name = document.createElement('span'); name.textContent = `${file.name} · ${(file.bytes / 1024).toFixed(1)} KiB`;
       const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '移除 ' + file.name; remove.disabled = submitting || fileBusy;
       remove.onclick = async () => { try { await change(next => { next.draftFiles = (next.draftFiles ?? []).filter(row => row.id !== file.id); }); render(); } catch (error) { showError(error); } };
+      const extension=file.name.split('.').at(-1).toLowerCase(),mediaType={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif',bmp:'image/bmp',avif:'image/avif'}[extension];
+      if(mediaType){draftImageKeys.add(file.id);line.append(draftImages.render(file.id,{...file,mediaType}));}
       line.append(name, remove); $('draft-files').append(line);
     }
-    const messages = $('messages'), previousScrollTop=messages.scrollTop, atBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 80;
+    draftImages.prune(draftImageKeys);
+    const messages = $('messages'), previousScrollTop=messages.scrollTop, atBottom = scrollAfterSend || messages.scrollHeight - messages.scrollTop - messages.clientHeight < 80;
+    scrollAfterSend = false;
     messages.replaceChildren();
     if (!visibleRows.length && !state.outbox.length) messages.append(emptyTemplate.cloneNode(true));
     arrivals.prime(visibleRows.map(row=>row.id));
@@ -158,6 +181,7 @@ async function startChat() {
       if(row.source){const origin=document.createElement('small');origin.className='meta';origin.textContent='来自 '+row.source.sourceId+' · '+row.source.scope+(row.source.missingAttachments.length?' · '+row.source.missingAttachments.length+' 个附件仅保留元数据':'');article.append(origin);}
       if (displayedText(row)) article.append(bubble);
       for (const file of row.attachments ?? []) {
+        if(file.mediaType?.startsWith('image/')){article.append(images.render(row.id+':'+file.id,file));continue;}
         if (file.mediaType?.startsWith('audio/')) {
           const key = row.id + ':' + file.id;
           const play = document.createElement('button'); play.className = 'voice-bar';
@@ -232,6 +256,7 @@ async function startChat() {
       if(arrival===1&&!matchMedia('(prefers-reduced-motion: reduce)').matches)article.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],{duration:220,easing:'ease-out'});
     }
     for (const [key, player] of players) if (!visibleRows.some(row => (row.attachments ?? []).some(file => row.id + ':' + file.id === key))) { player.audio.pause(); URL.revokeObjectURL(player.url); players.delete(key); }
+    images.prune(new Set(visibleRows.flatMap(row=>(row.attachments??[]).map(file=>row.id+':'+file.id))));
     messages.scrollTop = atBottom ? messages.scrollHeight : previousScrollTop;
     $('outbox').replaceChildren();
     for (const item of state.outbox) {
@@ -360,23 +385,28 @@ async function startChat() {
       });
     }
   }
+  function renderActivity(value,stale=false){
+    const label=stale?'':value?.state==='queued'?'收到消息':['working','sending'].includes(value?.state)?'正在输入…':'';
+    $('reply-activity').hidden=!label;$('reply-state').textContent=label;
+  }
   async function performRefresh() {
     try {
       if (!token) {
         const boot = await api('/v1/bootstrap'); token = boot.token;
         mediaModel = boot.mediaModel === true;
-        $('backup-note').textContent = boot.backupScope === 'chat-and-isolated-dsh' ? '备份此聊天已保存的消息、附件与独立 DSH 资料。' : boot.backupScope === 'unsupported-backend' ? '当前后端尚不支持联合备份。' : '备份此聊天已保存的消息与电脑上的附件。';
-        $('backend').textContent = boot.backend === 'dsh-bridge' ? '已连接 DSH 的 Chatagent 专用会话。模型、记忆和工具由 DSH 管理。' : boot.backend === 'not-connected' ? '备用 DSH 尚未连接。消息可以本地保存，暂时不会获得小鲸鱼回复。' : boot.modelMode === 'real' ? '使用独立配置的对话模型。模型选择可在“模型与连接”查看；人格、记忆和历史仍保存在本机。' : '当前是隔离演练空间；模型响应使用本地替身。导入情况可在“搬家档案”查看，微信继续正常使用。';
+        $('backend').textContent = boot.backend === 'dsh-bridge' ? '已连接 DSH 的 fish with me 专用会话。模型、记忆和工具由 DSH 管理。' : boot.backend === 'not-connected' ? '备用 DSH 尚未连接。消息可以本地保存，暂时不会获得小鲸鱼回复。' : boot.modelMode === 'real' ? '使用独立配置的对话模型。模型选择可在“模型与连接”查看；人格、记忆和历史仍保存在本机。' : '当前是隔离演练空间；模型响应使用本地替身。导入情况可在“搬家档案”查看，微信继续正常使用。';
         await change(next => applyMode(next, boot, next.epoch !== boot.epoch));
       }
-      await syncMessages(); render(); await drainOutbox(); await fillCache();
+      await syncMessages(); render(); await drainOutbox();
+      try{renderActivity(await api('/v1/activity'));}catch{renderActivity(null,true);}
+      await fillCache();
       connected = true;
       $('connection').textContent = state.cacheComplete ? '● 本地空间已连接 · 消息持久保存' : '● 本地空间已连接 · 正在补齐最近30天历史';
       await drainOutbox();
     } catch (error) {
       if (['MODE_CHANGED', 'MODE_EXPECTATION_REQUIRED'].includes(error.message)) showError(error);
       else {
-        token = null; connected = false; $('connection').textContent = '○ 本地服务未连接 · 可继续写消息';
+        token = null; connected = false; renderActivity(null,true); $('connection').textContent = '○ 本地服务未连接 · 可继续写消息';
         if (!['Failed to fetch', 'Load failed', 'AUTH_REQUIRED'].includes(error.message)) showError(error);
       }
     } finally { render(); }
@@ -387,11 +417,10 @@ async function startChat() {
   }
   $('text').value = state.draft;
   $('choose-file').onclick = () => $('file-input').click();
-  $('file-input').onchange = async () => {
+  async function addDraftFiles(selected) {
     if (fileBusy || submitting) return;
     fileBusy = true; render();
     try {
-      const selected = [...$('file-input').files];
       if ((state.draftFiles?.length ?? 0) + selected.length > 8 || selected.some(file => file.size > 64 * 1024 * 1024)) throw Error('FILE_LIMIT');
       const prepared = [];
       for (const file of selected) {
@@ -402,8 +431,24 @@ async function startChat() {
       await change(next => { next.draftFiles = [...next.draftFiles ?? [], ...prepared]; });
       $('error').hidden = true;
     } catch (error) { showError(error); }
-    finally { fileBusy = false; $('file-input').value = ''; render(); }
+    finally { fileBusy = false; render(); }
+  }
+  $('file-input').onchange = async () => {
+    try { await addDraftFiles([...$('file-input').files]); }
+    finally { $('file-input').value = ''; }
   };
+  $('text').addEventListener('paste', event => {
+    const clipboard = event.clipboardData;
+    const items = [...clipboard?.items ?? []].filter(item => item.kind === 'file' && item.type.startsWith('image/'));
+    const files = items.length ? items.map(item => item.getAsFile()).filter(Boolean) : [...clipboard?.files ?? []].filter(file => file.type.startsWith('image/'));
+    if (!files.length) return;
+    event.preventDefault();
+    if (fileBusy || submitting) { showError(Error('ATTACHMENT_BUSY')); return; }
+    return addDraftFiles(files.map((file, index) => {
+      const extension = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'image/bmp': 'bmp', 'image/avif': 'avif' }[file.type];
+      return new File([file], extension ? '截图-' + Date.now() + '-' + (index + 1) + '.' + extension : file.name, {type:file.type});
+    }));
+  });
   $('text').addEventListener('input', () => {
     const draft = $('text').value;
     void change(next => { next.draft = draft; }).catch(showError);
@@ -418,6 +463,7 @@ async function startChat() {
         next.outbox.push({ clientMessageId: id, text, files: next.draftFiles ?? [], queuedAt, epoch: next.epoch, hold: false, expectedMode: next.mode, expectedModeRevision: next.modeRevision });
         next.draft = ''; next.draftFiles = [];
       });
+      scrollAfterSend = true;
       $('text').value = ''; $('error').hidden = true;
     } catch (error) { showError(error); }
     finally { submitting = false; $('text').disabled = false; render(); }
@@ -441,7 +487,7 @@ async function startChat() {
   $('older').onclick=()=>loadTimeline();
   $('history-find').onclick=()=>loadTimeline(true);
   $('history-clear').onclick=()=>{$('history-query').value='';$('history-date').value='';$('history-type').value='';timelineGeneration++;historyRows=[];timelineCursor=null;searchActive=false;render();};
-  $('backup').onclick = async () => { $('backup').disabled = true; try { const result = await api('/v1/backups', {}); $('backup-result').textContent = `备份已校验：${result.messages} 条消息。` + (result.coverage.includes('chatagent.attachments') ? '已包含电脑附件。' : '') + (result.coverage.includes('chatagent.isolated-dsh') ? '包含独立 DSH 会话与请求账本。' : '范围仅为此本地空间。'); } catch (error) { showError(error); } finally { $('backup').disabled = false; } };
+  $('backup').onclick = async () => { $('backup').disabled = true; try { const result = await api('/v1/backups/workspace', {}); $('backup-result').textContent = `备份已校验：${result.messages} 条消息。` + (result.coverage.includes('chatagent.attachments') ? '已包含电脑附件。' : '') + (result.coverage.includes('chatagent.isolated-dsh') ? '包含独立 DSH 会话与请求账本。' : '范围仅为此本地空间。'); } catch (error) { showError(error); } finally { $('backup').disabled = false; } };
   disableControls(false);
   render(); await refresh(); setInterval(refresh, 1000); const arrivalTimer=setInterval(()=>{if(!document.hidden&&arrivals.ready(Date.now()))render();},100);window.addEventListener('pagehide',()=>clearInterval(arrivalTimer),{once:true}); window.addEventListener('online', refresh);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});

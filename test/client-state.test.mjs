@@ -12,6 +12,8 @@ import { wav } from '../packages/companion-capabilities/media.mjs';
 
 const source = fs.readFileSync(new URL('../apps/web/app.js', import.meta.url), 'utf8').replace(/^import .*;\r?\n/gm, '');
 const scopeSource=fs.readFileSync(new URL('../apps/web/chat-scope.js',import.meta.url),'utf8').replace(/^export /gm,'');
+const imageSource=fs.readFileSync(new URL('../apps/web/image-attachments.js',import.meta.url),'utf8').replace(/^export /gm,'');
+const stickerSource=fs.readFileSync(new URL('../apps/web/stickers.js',import.meta.url),'utf8').replace(/^export /gm,'');
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const nativeFetch = fetch;
 const defer = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
@@ -21,7 +23,7 @@ async function until(check) {
 }
 function element(tag = 'div') {
   return { tag, value: '', disabled: false, hidden: true, textContent: '', scrollHeight: 0, scrollTop: 0, clientHeight: 100, children: [], events: {}, style: {}, classList: { toggle() {} }, paused: true,
-    animate(){}, setAttribute(name, value) { this[name] = value; }, async play() { this.paused = false; }, pause() { this.paused = true; },
+    animate(){}, setAttribute(name, value) { this[name] = value; }, removeAttribute(name) { delete this[name]; }, async decode(){}, showModal(){this.open=true;}, close(){this.open=false;}, remove(){}, async play() { this.paused = false; }, pause() { this.paused = true; },
     setPointerCapture() {}, getBoundingClientRect() { return {width:232}; },
     append(...items) { this.children.push(...items); }, replaceChildren(...items) { this.children = [...items]; this.scrollTop=0; }, cloneNode() { return element(tag); },
     addEventListener(name, handler) { this.events[name] = handler; } };
@@ -50,17 +52,19 @@ async function client(service, { saved, savedFiles = new Map(), beforeFetch, aft
   } };
   const databaseNames=[];const indexedDB = { open(name) { databaseNames.push(name);const request = { result: database }; queueMicrotask(() => request.onsuccess()); return request; } };
   const createdAudio = [], documentEvents = {};
-  const document = { hidden: false, addEventListener(name,handler) { documentEvents[name]=handler; }, getElementById: get, createElement(tag) { const el=element(tag);if(tag==='audio')createdAudio.push(el);return el; }, querySelectorAll: () => [] };
+  const document = { body:element('body'), hidden: false, addEventListener(name,handler) { documentEvents[name]=handler; }, getElementById: get, createElement(tag) { const el=element(tag);if(tag==='audio')createdAudio.push(el);return el; }, querySelectorAll: () => [] };
   const mockFetch = async (route, options = {}) => {
     const body = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
     requests.push({ route, body, method: options.method }); await beforeFetch?.(route, body);
     const response = await nativeFetch(service.url + route, options); await afterFetch?.(route, response); return response;
   };
-  await new AsyncFunction('document', 'indexedDB', 'crypto', 'navigator', 'fetch', 'outboxAction', 'hiddenVoiceNotice', 'displayedText', 'window', 'setInterval','location','BubbleArrival','matchMedia', scopeSource+'\n'+source)(
+  const IntersectionObserver=class{constructor(callback){this.callback=callback;}observe(target){queueMicrotask(()=>this.callback([{target,isIntersecting:true}]));}unobserve(){}disconnect(){}};
+  await new AsyncFunction('document', 'indexedDB', 'crypto', 'navigator', 'fetch', 'outboxAction', 'hiddenVoiceNotice', 'displayedText', 'window', 'setInterval','location','BubbleArrival','matchMedia','IntersectionObserver', scopeSource+'\n'+imageSource+'\n'+stickerSource+'\n'+source)(
     document, indexedDB, webcrypto, { locks: { request: (_name, _options, callback) => callback({}) } }, mockFetch, outboxAction, hiddenVoiceNotice, displayedText,
-    { addEventListener() {} }, callback => intervals.push(callback),{search:scope==='default'?'':'?chat='+scope,origin:service.url},BubbleArrival,()=>({matches:false}));
+    { addEventListener() {} }, callback => intervals.push(callback),{search:scope==='default'?'':'?chat='+scope,origin:service.url},BubbleArrival,()=>({matches:false}),IntersectionObserver);
   return { databaseNames,get, requests, writes, paused, createdAudio, document, documentEvents, savedFiles: () => new Map(files), saved: () => structuredClone(persisted), ready: () => until(() => intervals.length >= 1),
     choose(file) { get('file-input').files = [file]; return get('file-input').onchange(); },
+    paste(files,{fallback=false}={}) { let prevented=false;const done=get('text').events.paste({clipboardData:{items:fallback?[]:files.map(file=>({kind:'file',type:file.type,getAsFile:()=>file})),files},preventDefault(){prevented=true;}});return {prevented,done}; },
     refresh: () => intervals[0](), arrivals:()=>intervals[1]?.(),
     send(text) { get('text').value = text; return get('composer').onsubmit({ preventDefault() {} }); },
     button(id, text) { const found = descendants(get(id)).find(node => node.textContent === text); assert.ok(found, `Missing button: ${text}`); return found; } };
@@ -73,6 +77,78 @@ async function fixture(t, options = {}) {
   return service;
 }
 const input = (id, queuedAt = Date.now()) => ({ deviceId: 'client-fixture', clientMessageId: id, text: '合成消息 ' + id, queuedAt });
+
+test('实际前端：离线旧缓存过滤空 thinking，不留空气泡，用户原文和附件保留', async t => {
+  const service=await fixture(t), raw='<thinking> </thinking>', at=Date.now();
+  const row=(id,role,text,attachments=[])=>({id,role,text,seq:1,created_at:at,queued_at:at,state:'completed',attachments});
+  const cached=[row('empty','assistant',raw),row('reply','assistant',raw+'\n缓存正文'),row('user','user',raw),row('media','assistant',raw,[{id:'fixture-file',name:'说明.pdf',mediaType:'application/pdf'}])];
+  const saved={deviceId:'cached-thinking',epoch:service.store.epoch,cursor:0,messages:cached,outbox:[],draft:'',mode:'social',modeRevision:0};
+  const browser=await client(service,{saved,beforeFetch(route){if(route.startsWith('/v1/sync'))throw Error('Failed to fetch');}});
+  await browser.ready();
+  const nodes=descendants(browser.get('messages'));
+  assert.deepEqual(nodes.filter(node=>node.className==='bubble').map(node=>node.textContent),['缓存正文',raw]);
+  assert.equal(nodes.filter(node=>node.tag==='article').length,3);
+  assert.ok(nodes.some(node=>node.className==='attachment'&&node.textContent.includes('说明.pdf')));
+  assert.deepEqual(browser.saved().messages,cached);
+});
+
+test('粘贴截图保存到草稿并显示预览，保留输入文字；点击发送前不上传，发送后原图字节不变',async t=>{
+ const service=await fixture(t),browser=await client(service);await browser.ready();
+ const content=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWP4//8/AAX+Av5Y8msOAAAAAElFTkSuQmCC','base64');
+ const screenshot=new File([content],'image.png',{type:'image/png'});
+ browser.get('text').value='截图说明';browser.get('text').events.input();
+ const pasted=browser.paste([screenshot]);assert.equal(pasted.prevented,true);await pasted.done;
+ assert.equal(browser.get('text').value,'截图说明');assert.equal(browser.saved().draft,'截图说明');
+ assert.equal(browser.saved().draftFiles.length,1,'items and files describe the same screenshot, never import twice');
+ assert.match(browser.saved().draftFiles[0].name,/^截图-.*\.png$/);
+ await until(()=>descendants(browser.get('draft-files')).some(el=>el.tag==='img'&&el.hidden===false));
+ assert.equal(browser.requests.some(r=>r.route==='/v1/attachments'&&r.method==='POST'),false);
+ await browser.send('截图说明');const row=service.store.history().at(-1);
+ assert.equal(row.text,'截图说明');assert.equal(row.attachments.length,1);
+ assert.deepEqual(fs.readFileSync(service.attachments.verify(row.attachments[0].id).file),content);
+ assert.equal(browser.saved().draftFiles.length,0);
+});
+
+test('纯文字粘贴不拦截；剪贴板 files 回退可多图，超限或保存失败时保留原草稿',async t=>{
+ const service=await fixture(t),browser=await client(service);await browser.ready();
+ assert.equal(browser.paste([]).prevented,false);
+ const images=Array.from({length:8},(_,n)=>new File(['synthetic-'+n],'image.png',{type:'image/png'}));
+ const multiple=browser.paste(images,{fallback:true});assert.equal(multiple.prevented,true);await multiple.done;
+ assert.equal(browser.saved().draftFiles.length,8);const before=browser.saved().draftFiles;
+ await browser.paste([images[0]]).done;assert.deepEqual(browser.saved().draftFiles,before);assert.match(browser.get('error').textContent,/最多8个/);
+ const failed=await client(service,{savedFiles:new Map(),beforeFilePut:()=> 'fail'});await failed.ready();
+ failed.get('text').value='保留文字';failed.get('text').events.input();await failed.paste([images[0]]).done;
+ assert.equal(failed.saved().draft,'保留文字');assert.equal(failed.saved().draftFiles,undefined);assert.match(failed.get('error').textContent,/本机保存未完成/);
+});
+
+test('自己发送消息在本机保存后立即滚到最新，等待网络不阻塞；上翻阅读与保存失败均保留位置',async t=>{
+ const service=await fixture(t),gate=defer();let posting=false;
+ t.after(()=>gate.resolve());
+ const browser=await client(service,{beforeFetch(route){if(route==='/v1/messages'){posting=true;return gate.promise;}},beforePut(snapshot){if(snapshot.outbox.some(row=>row.text==='SYNTHETIC_UNSAVED'))return 'pause';}});
+ await browser.ready();const messages=browser.get('messages');messages.scrollHeight=2400;messages.clientHeight=500;messages.scrollTop=400;
+ const sending=browser.send('SYNTHETIC_OWN_MESSAGE');await until(()=>posting);
+ assert.equal(messages.scrollTop,messages.scrollHeight);assert.equal(browser.saved().outbox.length,1);
+ gate.resolve();await sending;messages.scrollTop=400;
+ service.store.publish({deliveryId:'synthetic-incoming-while-reading',text:'SYNTHETIC_INCOMING'});await browser.refresh();
+ assert.equal(messages.scrollTop,400);
+ const failed=browser.send('SYNTHETIC_UNSAVED');await until(()=>browser.paused.length>0);browser.paused[0].fail();await failed;assert.equal(messages.scrollTop,400);assert.equal(browser.get('text').value,'SYNTHETIC_UNSAVED');
+ assert.match(browser.get('error').textContent,/本机保存未完成/);
+});
+
+test('实际前端：旧图片消息直接显示预览、打开大图，刷新复用已校验缓存，PDF仍为下载附件',async t=>{
+  const service=await fixture(t),imagePath=path.join(service.root,'old.png'),pdfPath=path.join(service.root,'课程.pdf');
+  fs.writeFileSync(imagePath,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWP4//8/AAX+Av5Y8msOAAAAAElFTkSuQmCC','base64'));fs.writeFileSync(pdfPath,'%PDF-1.4\nsynthetic');
+  const refs=[imagePath,pdfPath].map(file=>{const r=service.attachments.importFile(file);return {id:r.id,name:r.name,bytes:r.bytes,sha256:r.sha256,mediaType:r.media_type};});
+  const row=service.store.submit({...input('old-attachments'),attachments:refs});service.store.decide(row.id,row.revision,'cancel');
+  const browser=await client(service);await browser.ready();
+  const preview=()=>descendants(browser.get('messages')).find(n=>n.className==='image-attachment');
+  await until(()=>preview()?.children[0].src&&preview().children[0].hidden===false);
+  assert.equal(descendants(browser.get('messages')).filter(n=>n.className==='attachment').length,1);
+  assert.match(descendants(browser.get('messages')).find(n=>n.className==='attachment').textContent,/课程.pdf/);
+  const original=preview();preview().onclick();assert.equal(browser.document.body.children[0].open,true);
+  await browser.refresh();assert.equal(preview(),original);assert.equal(browser.requests.filter(r=>r.route.endsWith('/content')).length,1);
+  browser.document.body.children[0].children[1].children[1].onclick();assert.equal(browser.document.body.children[0].open,false);
+});
 
 test('实际前端：多条新气泡逐条显示，离开再打开不隐藏已保存的回复',async t=>{
  const service=await fixture(t),browser=await client(service);await browser.ready();
@@ -101,10 +177,11 @@ test('实际前端：播放音频更新渲染缓存，刷新复用播放器，�
   const service = await fixture(t), file = path.join(service.root, 'test.wav');
   const wave = Buffer.alloc(48); wave.write('RIFF'); wave.writeUInt32LE(40, 4); wave.write('WAVEfmt ', 8); wave.writeUInt32LE(16, 16); wave.writeUInt16LE(1, 20); wave.writeUInt16LE(1, 22); wave.writeUInt32LE(24000, 24); wave.writeUInt32LE(48000, 28); wave.writeUInt16LE(2, 32); wave.writeUInt16LE(16, 34); wave.write('data', 36); wave.writeUInt32LE(4, 40); fs.writeFileSync(file, wave);
   const row = service.attachments.importFile(file);
-  service.store.publish({ deliveryId: 'audio-player', text: '本地测试音', attachments: [{ id: row.id, name: row.name, bytes: row.bytes, sha256: row.sha256, mediaType: row.media_type }] });
+  service.store.publish({ deliveryId: 'voice-e52a6ee7-d90f-4367-9b94-a4406884c4df', text: '语音回复', attachments: [{ id: row.id, name: row.name, bytes: row.bytes, sha256: row.sha256, mediaType: row.media_type }] });
   const browser = await client(service); await browser.ready();
   const bar=()=>descendants(browser.get('messages')).find(e=>e.className==='voice-bar');
   assert.ok(bar());assert.equal(descendants(browser.get('messages')).some(e=>e.className==='attachment'),false);
+  assert.equal(descendants(browser.get('messages')).some(e=>e.className==='bubble'),false);
   await bar().onclick();const player=browser.createdAudio[0];assert.ok(player);assert.equal(player.paused,false);
   player.currentTime=12;browser.get("messages").scrollHeight=2000;browser.get("messages").scrollTop=1200;await browser.refresh();assert.equal(browser.get("messages").scrollTop,1200);await bar().onclick();assert.equal(player.paused,true);assert.equal(player.currentTime,0);await bar().onclick();assert.equal(player.paused,false);assert.equal(player.currentTime,0);
   assert.equal(browser.createdAudio.length,1);assert.equal(browser.requests.filter(r => r.route.endsWith('/content')).length,1);

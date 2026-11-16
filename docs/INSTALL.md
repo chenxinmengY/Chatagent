@@ -4,7 +4,11 @@
 
 旧独立 SDK 路径使用 `workspace.example.json`。其中 SDK 根指向包含 `dsh-agent`、`dsh-session` 等包的 `@deepseek-ai` 目录，`fishRoot` 由使用者提供；所有路径均为占位示例。`dataRoot` 必须是新的绝对路径，不应指向已有生产资料根。
 
-Windows 桌面构建需要 .NET Framework 编译器、PowerShell 和 WebView2 Runtime：
+发行安装包使用 `scripts/build-installers.ps1`，需要现有 Android 签名库和独立密码文件；用 `-AndroidKeystorePath`、`-AndroidKeystorePasswordFile` 指定，或 `-SkipAndroid` 只构建 Windows。脚本核对 Node.js 24.22.2、NSIS 3.12 和微软 WebView2 引导程序摘要，使用经过公开源码审计的副本打包。首次构建需联网，后续可复用已验证缓存。WebView2 引导程序更新后需重新核对微软签名并更新固定摘要。
+
+Windows 10/11 x64 安装程序内置 Node.js，首次打开显示连接教程；缺少 WebView2 时联网安装。右键托盘图标可复制环境专属的首次连接提示词，或导入已配置好的 DSH 桥接客户端 JSON。安装版把聊天和配置保存在 `%LOCALAPPDATA%/fish-with-me`，不会自动导入开发目录的私人资料；卸载保留该目录。DSH 和模型账号仍需用户准备。Windows 产物尚无商业代码签名证书。
+
+以下为开发者本机桌面构建，需要 .NET Framework 编译器、PowerShell 和 WebView2 Runtime：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-desktop.ps1 -Configuration C:\Chatagent\bridge.private.json
@@ -18,7 +22,7 @@ Android 使用 Java 17、Android build-tools 37.0.0 与 android-37.0 平台包�
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1 -SdkRoot C:\Android\Sdk -JdkRoot C:\Java\jdk-17 -BuildRoot C:\ChatagentBuild
 ```
 
-构建目录使用无中文绝对路径。开发签名保存在 .local-signing，不能提交。开发 APK 只能覆盖安装具有相同包名和签名的版本；不要通过卸载旧应用来绕过签名错误，否则会失去本地草稿和待发资料。正式发布应独立管理发行签名，目前脚本生成的是开发包。
+构建目录使用无中文绝对路径。开发签名保存在 .local-signing，不能提交。默认单独运行 Android 构建仍生成开发包；发行构建明确提供已有签名库与密码文件，不重新生成签名。现有安装升级必须保持同一包名和证书；不要通过卸载旧应用来绕过签名错误，否则会失去本地草稿和待发资料。发行签名、密码与备份需要在仓库外妥善保存。
 
 升级前从聊天页生成联合备份，保存旧源码和签名；停下当前 Chatagent 服务后更新代码，继续使用原 dataRoot。恢复时始终选新目录，核对恢复报告和待核对消息后再连接。未知结果不会自动重放。不要直接拿旧源码写回已升级过的数据库，回退应使用升级前备份恢复到新目录。
 

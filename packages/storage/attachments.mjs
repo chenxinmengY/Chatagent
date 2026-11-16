@@ -33,6 +33,7 @@ function mediaType(file) {
   if (n >= 8 && bytes.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))) return 'image/png';
   if (n >= 3 && bytes.subarray(0, 3).equals(Buffer.from('ffd8ff', 'hex'))) return 'image/jpeg';
   if (n >= 6 && ['GIF87a', 'GIF89a'].includes(bytes.toString('ascii', 0, 6))) return 'image/gif';
+  if (n >= 5 && bytes.toString('ascii', 0, 5) === '%PDF-') return 'application/pdf';
   if (n >= 12 && bytes.toString('ascii', 4, 8) === 'ftyp' && ['M4A ', 'M4B '].includes(bytes.toString('ascii', 8, 12))) return 'audio/mp4';
   if (n >= 4 && bytes.toString('ascii', 0, 4) === 'OggS') return 'audio/ogg';
   if (n >= 4 && bytes.toString('ascii', 0, 4) === 'fLaC') return 'audio/flac';

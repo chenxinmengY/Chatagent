@@ -13,12 +13,16 @@ import java.io.*;
 public final class SyncService extends Service {
   static final ScheduledExecutorService WORK = Executors.newSingleThreadScheduledExecutor();
   private ScheduledFuture<?> loop;
+  private NotificationProbe noticeTest;
+  private volatile long watchRenewed;
   private NotificationManager notifications;
   public IBinder onBind(Intent intent) { return null; }
   public void onCreate() {
     super.onCreate(); notifications = getSystemService(NotificationManager.class);
     notifications.createNotificationChannel(new NotificationChannel("connection", "后台连接", NotificationManager.IMPORTANCE_LOW));
-    notifications.createNotificationChannel(new NotificationChannel("messages", "小鲸鱼的新消息", NotificationManager.IMPORTANCE_DEFAULT));
+    notifications.createNotificationChannel(new NotificationChannel("messages", "fish with me 新消息", NotificationManager.IMPORTANCE_DEFAULT));
+    noticeTest=new NotificationProbe(this,()->MessageNotifications.test(this,notice("messages","后台通知测试","这是一条本机测试通知，没有发送聊天消息")));
+    BackgroundDiagnostics.event(this,"service_created");
   }
   private Notification notice(String channel, String title, String text) {
     return notice(channel,title,text,LocalStore.selected(this));
@@ -31,18 +35,28 @@ public final class SyncService extends Service {
     return builder.build();
   }
   public int onStartCommand(Intent intent, int flags, int startId) {
-    Notification persistent = notice("connection", "小鲸鱼 · 后台连接", "通过私人连接同步消息");
+    if(!ConnectionRecovery.enabled(this)){stopSelf();return START_NOT_STICKY;}
+    Notification persistent = notice("connection", "fish with me · 后台连接", "通过私人连接同步消息");
     if (Build.VERSION.SDK_INT >= 34) startForeground(1, persistent, ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING); else startForeground(1, persistent);
-    getSharedPreferences("runtime", 0).edit().putBoolean("enabled", true).apply();
-    if (loop == null) loop = WORK.scheduleWithFixedDelay(() -> { try { synchronize(); } catch (Exception error) {
+    ConnectionRecovery.cancel(this);
+    ConnectionRecovery.watch(this);watchRenewed=SystemClock.elapsedRealtime();
+    BackgroundDiagnostics.event(this,intent!=null&&ConnectionRecovery.ACTION.equals(intent.getAction())?"service_started_recovery":"service_started");
+    if (loop == null) loop = WORK.scheduleWithFixedDelay(() -> { try {
+      if(SystemClock.elapsedRealtime()-watchRenewed>=60000){ConnectionRecovery.watch(this);watchRenewed=SystemClock.elapsedRealtime();}
+      synchronize();
+    } catch (Exception error) {
       String code = error.getMessage();
       LocalStore.get(this).meta("status", "DEVICE_AUTH_REQUIRED".equals(code) ? "设备授权失效，请在电脑核对" : "连接中断 · 待发内容保留在本机");
-      if ("DEVICE_AUTH_REQUIRED".equals(code)) { getSharedPreferences("runtime", 0).edit().putBoolean("enabled", false).apply(); stopSelf(); }
+      if ("DEVICE_AUTH_REQUIRED".equals(code)) { ConnectionRecovery.pause(this); }
     } }, 0, 1, TimeUnit.SECONDS);
     if(intent!=null&&"send-now".equals(intent.getAction()))WORK.execute(()->{try{synchronize();}catch(Exception error){LocalStore.get(this).meta("status","连接中断 · 待发内容保留在本机");}});
+    if(intent!=null&&"test-notification".equals(intent.getAction())){
+      noticeTest.request(intent.getLongExtra("testDelayMs",20000));
+    }else noticeTest.restore();
     return START_STICKY;
   }
-  public void onDestroy() { if (loop != null) loop.cancel(false); super.onDestroy(); }
+  @Override public void onTaskRemoved(Intent intent){BackgroundDiagnostics.event(this,"task_removed");ConnectionRecovery.schedule(this);super.onTaskRemoved(intent);}
+  public void onDestroy() { if (loop != null) loop.cancel(false);if(noticeTest!=null)noticeTest.close();BackgroundDiagnostics.event(this,"service_destroyed");ConnectionRecovery.schedule(this);super.onDestroy(); }
   static String encode(String text) throws Exception { return URLEncoder.encode(text, "UTF-8"); }
   private void synchronize() throws Exception {
     JSONObject config = Secrets.load(this); if (config == null || !config.has("deviceId")) return;
@@ -88,6 +102,7 @@ public final class SyncService extends Service {
       catch (Exception error) { if ("MODE_CHANGED".equals(error.getMessage())) { pending.put("localState", "confirmation"); store.pending(pending); break; } else throw error; }
     }
     // Send after epoch validation, before optional profile/history downloads.
+    try{store.meta("replyActivity",api.object("/v1/activity",null).toString());store.meta("replyActivityAt",String.valueOf(System.currentTimeMillis()));}catch(Exception ignored){store.meta("replyActivityAt","0");}
     try{ProfileData.sync(api,store,store.readMeta("epoch",""));}catch(Exception ignored){}
     if (page.optBoolean("hasMore")) return;
     long before=Long.parseLong(store.readMeta("cacheBefore","0"));

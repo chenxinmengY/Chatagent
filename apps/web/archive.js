@@ -133,7 +133,7 @@ async function startArchive() {
     if (reset) {
       ready = false; offset = 0; rows = []; $('entries').replaceChildren(); $('entries').className = '';
       $('date-tools').hidden = true; $('date-heading').hidden = true; $('more').hidden = true; setCalendarOpen(false);
-      $('record-dates').replaceChildren(); $('archive-title').textContent = labels[kind]; document.title = '小鲸鱼 · ' + labels[kind];
+      $('record-dates').replaceChildren(); $('archive-title').textContent = labels[kind]; document.title = 'fish with me · ' + labels[kind];
       $('archive-intro').textContent = kind === 'diaries' ? '她写下的日常，和你一起收藏。' : kind.startsWith('bili') ? '看过的片段，留下的感受。按北京时间整理。' : '保存在这台电脑上的独立资料副本。';
       $('reading-note').hidden = !kind.startsWith('bili');
     }

@@ -16,12 +16,18 @@ test('旧语音处理中/转写仅按来源隐藏，不误隐藏用户同文、�
  const delivery={device:'plugin-delivery',client_id:'voice-'+'a'.repeat(40)+'-0',text:'语音回复 1/1（电脑已保存）',attachments:[{mediaType:'audio/wav'}]};
  assert.equal(displayedText(delivery),'');assert.equal(displayedText({...delivery,device:'phone'}),delivery.text);
  assert.equal(displayedText({...delivery,attachments:[]}),delivery.text);
+ const nativeVoice={...delivery,client_id:'voice-00000000-0000-0000-0000-000000000001',text:'语音回复'};
+ assert.equal(displayedText(nativeVoice),'');
+ assert.equal(displayedText({...nativeVoice,device:'phone'}),'语音回复');
+ assert.equal(displayedText({...nativeVoice,attachments:[]}), '语音回复');
+ assert.equal(displayedText({...nativeVoice,text:'生成失败'}),'生成失败');
+ assert.equal(displayedText({...nativeVoice,text:'正文说明'}),'正文说明');
  const song={...delivery,client_id:'b'.repeat(64),text:'整首翻唱（电脑已保存）'};assert.equal(displayedText(song),'');assert.equal(displayedText({...song,device:'phone'}),song.text);assert.equal(displayedText({...song,text:'生成失败'}),'生成失败');
 });
 
 test('Android历史与当前消息使用相同来源过滤，用户文字和错误不受影响',t=>{
  const {root}=sandbox(t),java=process.env.CHATAGENT_JDK??'C:/Program Files/Java/jdk-17';
- fs.writeFileSync(path.join(root,'PresentationCheck.java'),`import local.chatagent.privatechat.MessagePresentation; public class PresentationCheck {static void check(boolean b){if(!b)throw new AssertionError();}public static void main(String[] args){check(MessagePresentation.hidden("plugin-delivery","asr-start-1"));check(MessagePresentation.hidden("plugin-delivery","asr-text-1"));check(!MessagePresentation.hidden("phone","asr-text-1"));check(!MessagePresentation.hidden("plugin-delivery","notice-voice-1"));check(MessagePresentation.voiceCaption("plugin-delivery","voice-${'a'.repeat(40)}-0"));check(!MessagePresentation.voiceCaption("phone","voice-${'a'.repeat(40)}-0"));check(MessagePresentation.voiceCaption("plugin-delivery","${"b".repeat(64)}","整首翻唱（电脑已保存）"));check(!MessagePresentation.voiceCaption("plugin-delivery","${"b".repeat(64)}","生成失败"));System.out.println("presentation passed");}}`);
+ fs.writeFileSync(path.join(root,'PresentationCheck.java'),`import local.chatagent.privatechat.MessagePresentation; public class PresentationCheck {static void check(boolean b){if(!b)throw new AssertionError();}public static void main(String[] args){check(MessagePresentation.hidden("plugin-delivery","asr-start-1"));check(MessagePresentation.hidden("plugin-delivery","asr-text-1"));check(!MessagePresentation.hidden("phone","asr-text-1"));check(!MessagePresentation.hidden("plugin-delivery","notice-voice-1"));check(MessagePresentation.voiceCaption("plugin-delivery","voice-${'a'.repeat(40)}-0"));check(!MessagePresentation.voiceCaption("phone","voice-${'a'.repeat(40)}-0"));check(MessagePresentation.voiceCaption("plugin-delivery","voice-00000000-0000-0000-0000-000000000001","语音回复"));check(!MessagePresentation.voiceCaption("phone","voice-00000000-0000-0000-0000-000000000001","语音回复"));check(!MessagePresentation.voiceCaption("plugin-delivery","voice-00000000-0000-0000-0000-000000000001","生成失败"));check("[语音]".equals(MessagePresentation.preview("语音回复","plugin-delivery","voice-00000000-0000-0000-0000-000000000001","audio/wav")));check(MessagePresentation.voiceCaption("plugin-delivery","${"b".repeat(64)}","整首翻唱（电脑已保存）"));check(!MessagePresentation.voiceCaption("plugin-delivery","${"b".repeat(64)}","生成失败"));System.out.println("presentation passed");}}`);
  execFileSync(path.join(java,'bin/javac.exe'),['-encoding','UTF-8','-d',root,path.resolve('apps/android/src/local/chatagent/privatechat/MessagePresentation.java'),path.join(root,'PresentationCheck.java')]);
  assert.match(execFileSync(path.join(java,'bin/java.exe'),['-cp',root,'PresentationCheck'],{encoding:'utf8'}),/presentation passed/);
 });

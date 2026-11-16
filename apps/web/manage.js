@@ -1,7 +1,7 @@
 const $ = id => document.getElementById(id);
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 const btn = (text, action) => { const b = el('button', 'soft-button', text); b.onclick = action; return b; };
-let dshTools=[], value, runtime, dirty = false, selectedPersona, selectedMode = 'social', category = '', search = '', busy = false;
+let dshTools=[], value, runtime, dirty = false, selectedPersona, selectedMode = 'social', category = '', search = '', busy = false, pendingPersonaId;
 const section=new URLSearchParams(location.search).get('section');
 let tab = (location.pathname==='/settings'?(section==='reply'?'settings':section):new URLSearchParams(location.search).get('tab')) ?? 'personas';
 if (!['personas','sessions','settings'].includes(tab)) tab = 'personas';
@@ -30,13 +30,13 @@ function panel(title, subtitle) { const box = el('section', 'management-card'); 
 function render() {
   $('management').replaceChildren();
   const title = {personas:'人格卡',sessions:'会话管理',settings:'回复与上下文'}[tab];
-  document.querySelector('h1').textContent = title; document.title = '小鲸鱼 · ' + title;
+  document.querySelector('h1').textContent = title; document.title = 'fish with me · ' + title;
   for (const a of document.querySelectorAll('.management-tabs a')) a.classList.toggle('selected', new URL(a.href).searchParams.get('tab') === tab);
   if (tab === 'personas') renderPersonas(); else if (tab === 'sessions') renderSessions(); else renderSettings();
 }
 function renderPersonas() {
-  const host = $('management'), bar = el('div', 'management-actions');
-  bar.append(el('span', 'muted', `${value.personas.length} 张人格卡 · 编辑独立副本`), btn('＋ 新建人格', () => { const p = { id: crypto.randomUUID(), name: '新人格 ' + (value.personas.length + 1), text: '', categoryId: null }; value.personas.push(p); selectedPersona = p.id; changed(); render(); }));
+  const host = $('management'), bar = el('div', 'management-actions'), personas = value.personas.filter(p => !p.archived);
+  bar.append(el('span', 'muted', `${personas.length} 张人格卡 · 编辑独立副本`), btn('＋ 新建人格', () => { const p = { id: crypto.randomUUID(), name: '新人格 ' + (personas.length + 1), text: '', categoryId: null }; value.personas.push(p); selectedPersona = p.id; changed(); render(); }));
   const file = el('input'); file.type = 'file'; file.accept = '.md,.markdown,.txt'; file.hidden = true;
   file.onchange = async () => { try {
     const f = file.files[0]; if (!f) return; if (f.size > 60000) throw Error('人格文件最多 60 KB。');
@@ -53,7 +53,7 @@ function renderPersonas() {
   filter.onchange = () => { category = filter.value; selectedPersona = null; render(); };
   const newCategory = el('input'); newCategory.placeholder = '新分类名称'; newCategory.setAttribute('aria-label','新分类名称');
   row.append(newCategory, btn('新建分类', () => { if (!newCategory.value.trim()) return; value.categories.push({ id: crypto.randomUUID(), name: newCategory.value.trim() }); changed(); render(); })); categories.append(row); host.append(categories);
-  const cards = value.personas.filter(p => !category || category === 'uncategorized' ? !category || p.categoryId === null : p.categoryId === category);
+  const cards = personas.filter(p => !category || category === 'uncategorized' ? !category || p.categoryId === null : p.categoryId === category);
   if (!cards.some(p => p.id === selectedPersona)) selectedPersona = cards[0]?.id;
   const layout = el('div', 'management-layout'), list = el('nav', 'persona-list'); list.setAttribute('aria-label','人格列表');
   for (const p of cards) { const b = btn(p.name, () => { selectedPersona = p.id; render(); }); b.classList.toggle('selected', p.id === selectedPersona); b.append(el('small', '', Object.values(value.modes).some(m => m.personaId === p.id) ? '已绑定会话' : '可分配给会话')); list.append(b); }
@@ -62,6 +62,10 @@ function renderPersonas() {
     field(editor, '人格名称', p.name, v => p.name = v);
     select(editor, '分类', p.categoryId, [[null, '未分类'], ...value.categories.map(c => [c.id, c.name])], v => p.categoryId = v);
     field(editor, '人格内容', p.text, v => p.text = v, { multiline: true, help: '最多 60 KB。保存后新一轮采用新内容，当前回复使用开始时的人格。' });
+    const actions = el('div', 'management-actions'), remove = btn('删除人格卡', () => { if (busy) return; pendingPersonaId = p.id; $('delete-persona-name').textContent = p.name; $('delete-persona-dialog').showModal(); });
+    remove.classList.add('danger-button'); actions.append(remove); editor.append(actions);
+  } else {
+    editor.append(el('p', 'management-note', personas.length ? '当前分类没有人格卡，可以切换分类或新建人格。' : '还没有人格卡，可以点击“新建人格”或导入人格文件。'));
   }
   layout.append(list, editor); host.append(layout);
 }
@@ -71,8 +75,7 @@ function renderSettings() {
   if(runtime?.runtime?.kind==='dsh-bridge'){const link=el('a','text-link','在聊天中设置本会话的工具与权限 →');link.href='/?settings=tools';host.append(link);}
   const split = panel('分条发送', '按独立意思自然分段，保留代码、完整列表和连续说明。');
   field(split, '单次回复最多分条数', p.maxMessages, v => p.maxMessages = v, { type: 'number', min: 0, max: 20, help: '0 不限制；1 整条发送；2–20 为上限。按空行分段，不按字数硬切。' });
-  split.append(btn('停止尚未发送的分段', async () => { try { const r = await api('/v1/reply-parts/stop', {}); $('feedback').textContent = `已停止 ${r.cancelled} 条待发送分段，当前对话任务继续。`; } catch (e) { $('error').textContent = e.message; } }));
-  split.append(el('p', 'muted', '也可以在手机或电脑聊天中发送“停止分段”。提醒与插件主动消息按原文保存。')); host.append(split);
+  host.append(split);
   const pace = panel('回复节奏', '短时间连续发送的文字合并为一轮判断，原始消息分别保留。');
   field(pace, '消息合并等待 / 秒', p.mergeMs / 1000, v => p.mergeMs = v === null ? null : v * 1000, { type: 'number', min: 0, max: 60, help: '从最后一条消息收到时开始等待；不同设备和带附件的消息不合并。' });
   field(pace, '私聊回复最小间隔 / 秒', p.minIntervalMs / 1000, v => p.minIntervalMs = v === null ? null : v * 1000, { type: 'number', min: 0, max: 60 }); host.append(pace);
@@ -99,7 +102,7 @@ function renderSessions() {
   const m=value.modes.social, box=panel(m.name,'在这里管理聊天的人格、资料分组和上下文。');
   field(box,'会话名称',m.name,v=>m.name=v);
   select(box,'工作区分组',m.groupId,[[null,'未分组'],...value.groups.map(g=>[g.id,g.name])],v=>m.groupId=v);
-  select(box,'当前人格',m.personaId,[[null,'沿用导入人格'],...value.personas.map(p=>[p.id,p.name])],v=>m.personaId=v);
+  select(box,'当前人格',m.personaId,[[null,'沿用导入人格'],...value.personas.filter(p=>!p.archived||p.id===m.personaId).map(p=>[p.id,p.name+(p.archived?'（当前聊天保留）':'')])],v=>m.personaId=v);
   field(box,'此会话上下文阈值 / token',m.contextMaxTokens,v=>m.contextMaxTokens=v,{type:'number',min:0,max:2000000,help:'留空继承全局；0 关闭；否则 4,000–2,000,000。'});
   const binding=runtime?.runtime?.modeBindings?.find(b=>b.mode===selectedMode), context=runtime?.context?.modes?.find(m=>m.mode===selectedMode);
   box.append(el('p','muted',binding?'聊天会话已建立':'尚未开始聊天'),el('p','muted',context?.tokens!=null?`当前上下文：${context.tokens} token（${context.tokenSource==='estimated'?'估算':'模型计量'}）`:'上下文用量：尚无可用计量'),el('p','management-note',contextDescription()));
@@ -109,6 +112,15 @@ function renderSessions() {
   for(const file of runtime?.files?.filter(f=>f.mode===selectedMode)??[]) jobs.append(el('p','muted',`${file.name} · ${file.bytes} 字节（最近 100 条消息中的附件）`));
   const history=el('a','text-link','查看保存的聊天原文');history.href='/archive?kind=history';jobs.append(history);box.append(jobs);layout.append(list,box);host.append(layout);
 }
+$('cancel-delete-persona').onclick=()=>$('delete-persona-dialog').close();
+$('delete-persona-dialog').onclose=()=>{pendingPersonaId=undefined;};
+$('delete-persona-form').onsubmit=e=>{
+  e.preventDefault();if(busy)return;const p=value?.personas.find(p=>p.id===pendingPersonaId);if(!p)return;
+  if(Object.values(value.modes).some(m=>m.personaId===p.id))p.archived=true;else value.personas=value.personas.filter(row=>row.id!==p.id);
+  selectedPersona=undefined;$('delete-persona-dialog').close();changed();render();$('error').textContent='';
+  $('feedback').textContent='已从列表移除「'+p.name+'」；点击“保存更改”后生效。已有聊天的人格、记录和记忆保留。';
+  (document.querySelector('.persona-list button.selected')??document.querySelector('#management .management-actions button'))?.focus();
+};
 $('save').onclick=async()=>{if(busy||!value)return;busy=true;$('save').disabled=true;$('error').textContent='';try{value=await api('/v1/preferences',value);dirty=false;$('feedback').textContent='已保存。新一轮对话采用新配置，已有记录保持。';render();}catch(e){$('error').textContent=e.message;}finally{busy=false;$('save').disabled=false;}};
 for(const a of document.querySelectorAll('.management-tabs a'))a.onclick=e=>{e.preventDefault();tab=new URL(a.href).searchParams.get('tab');history.replaceState(null,'',a.href);dispatchEvent(new Event('chatagent-navigation'));render();};
 addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});

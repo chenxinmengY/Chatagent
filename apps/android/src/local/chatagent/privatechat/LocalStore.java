@@ -16,17 +16,21 @@ final class LocalStore extends SQLiteOpenHelper {
   private LocalStore(Context context,String id) { super(context,id.equals("default")?"chatagent.sqlite":"chatagent-"+id+".sqlite", null, 1);appContext=context;chatId=id;setWriteAheadLoggingEnabled(true); }
   List<LocalStore> siblings(){List<LocalStore> result=new ArrayList<>();result.add(get(appContext,"default"));for(String file:appContext.databaseList())if(file.matches("chatagent-[a-f0-9-]{36}\\.sqlite"))result.add(get(appContext,file.substring(10,file.length()-7)));return result;}
   public void onCreate(SQLiteDatabase db) { db.execSQL("CREATE TABLE meta(key TEXT PRIMARY KEY,value TEXT NOT NULL)"); db.execSQL("CREATE TABLE messages(id TEXT PRIMARY KEY,seq INTEGER NOT NULL,created INTEGER NOT NULL,body TEXT NOT NULL)"); db.execSQL("CREATE TABLE outbox(id TEXT PRIMARY KEY,body TEXT NOT NULL)"); }
+  public void onOpen(SQLiteDatabase db) { super.onOpen(db);db.execSQL("CREATE INDEX IF NOT EXISTS messages_seq ON messages(seq)");db.execSQL("CREATE INDEX IF NOT EXISTS messages_created_seq ON messages(created,seq,id)"); }
   public void onUpgrade(SQLiteDatabase db, int old, int next) { throw new IllegalStateException("DATABASE_UPGRADE_REQUIRED"); }
   synchronized String readMeta(String key, String fallback) { try (Cursor cursor = getReadableDatabase().rawQuery("SELECT value FROM meta WHERE key=?", new String[]{key})) { return cursor.moveToFirst() ? cursor.getString(0) : fallback; } }
   synchronized void meta(String key, String value) { getWritableDatabase().execSQL("INSERT OR REPLACE INTO meta(key,value) VALUES(?,?)",new Object[]{key,value}); }
   synchronized List<JSONObject> rows(String table, String order) throws Exception { List<JSONObject> result = new ArrayList<>(); try (Cursor cursor = getReadableDatabase().rawQuery("SELECT body FROM " + table + " ORDER BY " + order, null)) { while (cursor.moveToNext()) result.add(new JSONObject(cursor.getString(0))); } return result; }
-  synchronized List<JSONObject> messages() throws Exception { List<JSONObject> result = rows("messages", "seq DESC LIMIT 200"); Collections.reverse(result); return result; }
+  synchronized List<JSONObject> messages() throws Exception { return messages(200); }
+  synchronized List<JSONObject> messages(int limit) throws Exception { List<JSONObject> result = rows("messages", "seq DESC LIMIT "+limit); Collections.reverse(result); return result; }
+  synchronized boolean containsMessage(String id){try(Cursor cursor=getReadableDatabase().rawQuery("SELECT 1 FROM messages WHERE id=?",new String[]{id})){return cursor.moveToFirst();}}
   static String preview(JSONObject row){JSONArray files=row.optJSONArray("attachments");if(files==null)files=row.optJSONArray("files");JSONObject file=files==null?null:files.optJSONObject(0);return MessagePresentation.preview(row.optString("text"),row.optString("device"),row.optString("client_id"),file==null?"":file.optString("mediaType"));}
   synchronized void markUnread(String id){meta("unread-v1",UnreadMessages.add(readMeta("unread-v1",""),id));}
   synchronized void markRead(){if(!readMeta("unread-v1","").isEmpty())meta("unread-v1","");}
   synchronized JSONObject inbox()throws Exception{
     JSONObject latest=null;
-    try(Cursor cursor=getReadableDatabase().rawQuery("SELECT body FROM messages ORDER BY created DESC,seq DESC",null)){while(cursor.moveToNext()){JSONObject row=new JSONObject(cursor.getString(0));if(!MessagePresentation.hidden(row.optString("device"),row.optString("client_id"))){latest=row;break;}}}
+    String[] before=null;boolean foundRows=true;
+    while(latest==null&&foundRows){foundRows=false;try(Cursor cursor=getReadableDatabase().rawQuery("SELECT body,created,seq,id FROM messages "+(before==null?"":"WHERE (created,seq,id)<(?,?,?) ")+"ORDER BY created DESC,seq DESC,id DESC LIMIT 32",before)){while(cursor.moveToNext()){foundRows=true;JSONObject row=new JSONObject(cursor.getString(0));if(!MessagePresentation.hidden(row.optString("device"),row.optString("client_id"))){latest=row;break;}before=new String[]{cursor.getString(1),cursor.getString(2),cursor.getString(3)};}}}
     long at=latest==null?0:latest.optLong("created_at");String id=latest==null?"":latest.optString("id"),preview=latest==null?"打开聊天，继续你们的故事":preview(latest);
     for(JSONObject row:pending())if(row.optLong("queuedAt")>=at){at=row.optLong("queuedAt");id="pending-"+row.optString("clientMessageId");preview=preview(row);}
     return new JSONObject().put("id",id).put("at",at).put("preview",preview).put("unread",UnreadMessages.count(readMeta("unread-v1","")));

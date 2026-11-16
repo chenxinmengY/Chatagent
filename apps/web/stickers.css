@@ -1,0 +1,8 @@
+#open-stickers{width:40px;height:36px;padding:6px;background:transparent;color:#365a83;display:grid;place-items:center;border-radius:8px;flex-shrink:0}
+#open-stickers:hover{background:#edf3fc}#open-stickers svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.chat-page #composer{position:relative}.sticker-panel{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);max-height:350px;overflow-y:auto;overscroll-behavior:contain}.sticker-panel[hidden]{display:none}
+.sticker-header{display:flex;gap:10px;align-items:center;margin-bottom:10px}.sticker-header strong{flex:1;font-size:14px}.sticker-header button,.sticker-panel>button{background:#edf3fc;color:#315c93;padding:8px 10px;font-size:13px}
+.sticker-panel>input[type=search]{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;color:inherit;background:var(--surface)}
+.sticker-status{font-size:12px;color:var(--muted);margin:8px 0}.sticker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px;padding:4px 0}
+.sticker-item{height:76px;min-width:0;display:grid;place-items:center;padding:4px;background:transparent;border-radius:8px}.sticker-item:hover{background:#e7effb}.sticker-item img{display:block;max-width:100%;max-height:68px;object-fit:contain}.sticker-message{max-width:min(180px,82%)}.sticker-message img{max-height:180px}
+@media(max-width:760px){.sticker-panel{max-height:36dvh}.sticker-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}

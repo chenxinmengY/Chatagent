@@ -9,7 +9,8 @@ if(fs.existsSync(target)||target===root||!path.relative(root,target).startsWith(
 const files=[];
 function collect(dir,prefix){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const full=path.join(dir,e.name),name=prefix+e.name;if(e.isSymbolicLink())throw Error('SOURCE_LINK_REFUSED');if(e.isDirectory())collect(full,name+'/');else if(e.isFile())files.push({full,name});}}
 for(const name of ['apps','packages','test'])collect(path.join(root,name),name+'/');
-for(const name of ['start-bridge.mjs','start-workspace.mjs','start-standby.mjs','build-android.ps1','build-desktop.ps1','build-region-data.mjs','import-attachments.mjs','restore-runtime-backup.mjs','restore-local-backup.mjs','prepare-source.mjs','source-policy.mjs'])files.push({full:path.join(root,'scripts',name),name:'scripts/'+name});
+collect(path.join(root,'scripts/diagnostics'),'scripts/diagnostics/');
+for(const name of ['start-bridge.mjs','start-workspace.mjs','start-standby.mjs','build-android.ps1','build-desktop.ps1','build-installers.ps1','windows-installer.nsi','build-icons.ps1','build-region-data.mjs','import-attachments.mjs','restore-runtime-backup.mjs','restore-local-backup.mjs','prepare-isolated-tts.mjs','prepare-local-plugins.mjs','prepare-source.mjs','source-policy.mjs'])files.push({full:path.join(root,'scripts',name),name:'scripts/'+name});
 for(const name of ['package.json','package-lock.json','workspace.example.json','bridge.example.json','.gitignore'])files.push({full:path.join(root,name),name});
 if(fs.existsSync(path.join(root,'release')))collect(path.join(root,'release'),'');
 else{for(const name of ['README.md','THIRD_PARTY_NOTICES.md','CONTRIBUTING.md'])files.push({full:path.join(root,name),name});collect(path.join(root,'docs'),'docs/');}

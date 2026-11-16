@@ -3,15 +3,19 @@ import { applySavedAppearance } from './appearance.js';
 applySavedAppearance();
 import { installChatProfiles } from './profile-chat.js';
 const links = [
-  ['/overview', '概览', '▦'], ['/chats', '聊天', '◷'], ['/settings', '设置', '⚙'], ['/plugins', '插件', '◇']
+  ['/overview', '概览', 'overview'], ['/chats', '聊天', 'chat'], ['/manage?tab=personas', '人格卡', 'profile'], ['/settings', '设置', 'settings'], ['/plugins', '插件', 'plugins']
 ];
+const navIcons={overview:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',chat:'<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-1 1v-8.5A8.5 8.5 0 0 1 11.5 4h1a8.5 8.5 0 0 1 8.5 7.5Z"/><path d="M8 10h8M8 14h5"/>',profile:'<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="9" r="2.5"/><path d="M8 17c0-4 8-4 8 0"/>',settings:'<path d="M4 6h7m5 0h4M4 12h2m5 0h9M4 18h9m5 0h2"/><circle cx="13.5" cy="6" r="2.5"/><circle cx="8.5" cy="12" r="2.5"/><circle cx="15.5" cy="18" r="2.5"/>',plugins:'<path d="M9 3H4v6a3 3 0 1 1 0 6v6h6a3 3 0 1 1 6 0h5v-6a3 3 0 1 1 0-6V3h-6a3 3 0 1 1-6 0Z"/>'};
+const params=new URLSearchParams(location.search);
+const personaPage=location.pathname==='/manage'&&(params.get('tab')??'personas')==='personas'||location.pathname==='/settings'&&params.get('section')==='personas';
 const side = document.querySelector('aside');
 let selectedChat=chatId;
 function scopeNavigation(){for(const a of document.querySelectorAll('aside nav a'))a.href=chatUrl(a.href,selectedChat);}
 addEventListener('chatagent-selection',event=>{selectedChat=event.detail.id;scopeNavigation();});
 function activeLink(href) {
   const target=new URL(href,location.origin);
-  if(target.pathname==='/settings')return ['/settings','/customize','/models','/profiles','/devices','/manage'].includes(location.pathname);
+  if(target.pathname==='/manage'&&target.searchParams.get('tab')==='personas')return personaPage;
+  if(target.pathname==='/settings')return !personaPage&&['/settings','/customize','/models','/profiles','/devices','/manage'].includes(location.pathname);
   if(target.pathname==='/plugins')return ['/plugins','/archive'].includes(location.pathname);
   if(target.pathname==='/chats')return ['/chats','/'].includes(location.pathname);
   if(target.pathname!==location.pathname)return false;
@@ -23,12 +27,12 @@ if (side) {
   const oldBottom = side.querySelector('.side-bottom');
   side.replaceChildren();
   const brand = document.createElement('a'); brand.href='/overview'; brand.className='brand';
-  brand.innerHTML='<img src="/whale.svg" alt=""><span>Chatagent<small>小鲸鱼的私人空间</small></span>'; side.append(brand);
+  brand.innerHTML='<img src="/whale.svg" alt=""><span>fish with me<small>小鲸鱼的私人空间</small></span>'; side.append(brand);
   const label=document.createElement('small'); label.className='nav-label'; label.textContent='工作空间';side.append(label);
   const nav=document.createElement('nav');nav.setAttribute('aria-label','主导航');
   for(const [href,name,icon] of links){const a=document.createElement('a');a.href=chatUrl(href);a.className='nav-item';
     const selected=activeLink(href);
-    if(selected){a.classList.add('selected');a.setAttribute('aria-current','page');}const glyph=document.createElement('span');glyph.className='nav-glyph';glyph.textContent=icon;a.append(glyph,document.createTextNode(name));nav.append(a);}
+    if(selected){a.classList.add('selected');a.setAttribute('aria-current','page');}const glyph=document.createElement('span');glyph.className='nav-glyph';glyph.setAttribute('aria-hidden','true');glyph.innerHTML='<svg viewBox="0 0 24 24" focusable="false">'+navIcons[icon]+'</svg>';a.append(glyph,document.createTextNode(name));nav.append(a);}
   side.append(nav);
   addEventListener('hashchange',()=>{for(const a of nav.querySelectorAll('a')){const selected=activeLink(a.href);a.classList.toggle('selected',selected);if(selected)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}});
   addEventListener('chatagent-navigation',()=>{for(const a of nav.querySelectorAll('a')){const selected=activeLink(a.href);a.classList.toggle('selected',selected);if(selected)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}});
@@ -37,15 +41,16 @@ if (side) {
 
 installChatProfiles();
 
-const settingsTabs=[['appearance','外观'],['profiles','个人资料'],['models','模型与连接'],['personas','人格卡'],['data','导入与备份'],['devices','设备'],['workspace','工作区']];
-const params=new URLSearchParams(location.search);
-const settingsPage=['/settings','/customize','/models','/profiles','/devices','/manage'].includes(location.pathname);
+const settingsTabs=[['appearance','外观'],['profiles','个人资料'],['models','模型与连接'],['voice','语音'],['data','导入与备份'],['devices','设备'],['workspace','工作区']];
+const settingsPage=!personaPage&&['/settings','/customize','/models','/profiles','/devices','/manage'].includes(location.pathname);
+if(personaPage)document.querySelector('.management-tabs')?.remove();
 if(settingsPage){
   let section=location.pathname==='/settings'?(params.get('section')??'appearance'):({'/customize':'appearance','/models':'models','/profiles':'profiles','/devices':'devices','/manage':params.get('tab')==='settings'?'reply':params.get('tab')??'personas'})[location.pathname];
   if(!settingsTabs.some(([id])=>id===section))section='appearance';
-  document.body.dataset.hub='settings';document.title='设置 · Chatagent';
+  document.body.dataset.hub='settings';document.title='设置 · fish with me';
   const nav=document.createElement('nav');nav.className='hub-tabs';nav.setAttribute('aria-label','设置分类');
-  for(const [id,label] of settingsTabs){const a=document.createElement('a');a.href='/settings?section='+id;a.textContent=label;if(id===section){a.className='selected';a.setAttribute('aria-current','page');}nav.append(a);}
+  for(const [id,label] of settingsTabs){const a=document.createElement('a');a.href=chatUrl('/settings?section='+id);a.textContent=label;if(id==='voice'){a.hidden=true;a.dataset.voiceReplyTab='';}if(id===section){a.className='selected';a.setAttribute('aria-current','page');}nav.append(a);}
+  fetch('/v1/bootstrap').then(r=>r.json()).then(boot=>{if(boot.voiceReplies===true)nav.querySelector('[data-voice-reply-tab]').hidden=false;}).catch(()=>{});
   document.querySelector('main header').after(nav);
   for(const card of document.querySelectorAll('[data-settings-section]'))card.hidden=card.dataset.settingsSection!==section;
 }else if(['/plugins','/archive'].includes(location.pathname)){
@@ -56,7 +61,7 @@ if(settingsPage){
 }
 
 // Plugin pages come from the connected runtime; absent plugins never get empty menu entries.
-fetch('/v1/bootstrap').then(r=>r.json()).then(boot=>chatFetch('/v1/plugins',{headers:{'X-Chatagent-Token':boot.token}})).then(r=>{if(!r.ok)throw Error();return r.json();}).then(plugins=>{
+fetch('/v1/bootstrap').then(r=>r.json()).then(boot=>{if(boot.backend==='not-connected'){const details=document.querySelector('.connection-details');if(details)details.open=true;}return chatFetch('/v1/plugins',{headers:{'X-Chatagent-Token':boot.token}});}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(plugins=>{
  if(!plugins.length)return;
  const css=document.createElement('link');css.rel='stylesheet';css.href='/plugin-detail.css';document.head.append(css);
  const nav=document.createElement('div');nav.className='plugin-subnav';nav.setAttribute('aria-label','我的插件');

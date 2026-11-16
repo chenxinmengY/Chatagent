@@ -6,6 +6,10 @@ Chatagent 负责聊天界面、消息保存与同步、角色管理和资料迁�
 
 这是一个借助 AI 编程工具逐步实现的学习实践项目，目前处于早期开发阶段。项目重点是跨端交互、执行状态、插件接入和数据管理；语言模型、语音模型与记忆引擎来自第三方。可以通过源码、测试及[项目说明](docs/PROJECT_OVERVIEW.md)了解实现与边界。
 
+当前源码版本 **0.4.9**（2026-11-16）。延续首次公开历史，合入此后的桌面与 Android 修复、图片/GIF/表情、插件隔离、提醒上下文及可选 RVC/DirectML 接口。变化与验证边界见 [CHANGELOG](CHANGELOG.md)。
+
+部分插件宿主和网络校验代码复用、改编自 [WeChatAgent](https://github.com/sourcepro5/WeChatAgent)，并保留 Derpyu520、qq-bridge / QSH contributors 等原版权通知。来源、外部模型及独立许可见 [第三方说明](THIRD_PARTY_NOTICES.md)。
+
 ## 功能
 
 - 多角色聊天：各聊天独立配置人格、近期上下文窗口与工具权限。
@@ -13,6 +17,8 @@ Chatagent 负责聊天界面、消息保存与同步、角色管理和资料迁�
 - 聊天行为：基础主动聊天、回复频率、近期窗口与话题摘要；历史原文保留并可检索。
 - DSH 桥接：复用已有模型和工具；按来源展示用户插件、说明与权限，插件参数在对应宿主中配置。
 - 可选插件入口：课表更新、提醒、音视频活动及记事本，需安装相应插件和运行环境。
+- 图片与表情：原图附件、GIF 分帧理解、表情搜索与收藏；具体视觉输入还取决于模型和媒体适配器。
+- 可选高级语音：普通 TTS 后接 RVC 换声，点歌支持片段和整曲；DirectML 分块合成接口及限制见 [语音说明](docs/VOICE-RVC.md)。
 - 资料迁移：Chatagent 便携包、WeChatAgent 档案、AstrBot 会话 JSONL，支持预检、去重、来源保留与缺失附件报告。
 - 跨端体验：外观预览、Android 消息通知、最新消息预览、未读数与设备配对。
 
@@ -29,14 +35,18 @@ npm start
 
 ## 接入 DSH
 
-当前验证的 SDK 系列为 `@deepseek-ai/* 0.2.1-rc.3`；不同版本需重新验证。主路径是在已运行的 DSH 中加载本项目桥接插件，为 Chatagent 创建专用会话：
+已验证 `@deepseek-ai/* 0.2.1-rc.3`；0.4.6 同时修复并通过官方 `0.2.2-rc.1` SDK 的提示词、工具权限及合成对话检查。不同版本和第三方插件组合仍需验证。主路径是在已运行的 DSH 中加载本项目桥接插件，为 Chatagent 创建专用会话：
 
 1. 按 [DSH 桥接说明](docs/DSH-BRIDGE.md)配置桥接插件、独立资料目录和随机令牌。
 2. 复制 `bridge.example.json` 为 `bridge.private.json`，填写自己的绝对路径。
 3. 运行 `node scripts/start-bridge.mjs bridge.private.json`。
 4. 在 DSH 配置模型及所需插件，在每个 Chatagent 聊天中授权工具。
 
-记忆可使用 [dsh-fish-memory](https://github.com/Yuuyuko-uu/dsh-fish-memory)，原作者 **Yuuyuko-uu**，当前验证版本为 1.5.0，采用其独立插件许可。鱼插件代码不随本仓库分发；请自行安装并保留上游许可证。语音识别、合成、媒体和唱歌功能也需要另行准备运行环境及有权使用的模型或素材。
+记忆可使用 [dsh-fish-memory](https://github.com/Yuuyuko-uu/dsh-fish-memory)，原作者 **Yuuyuko-uu**，当前验证版本为 1.5.0，采用其独立插件许可。鱼插件代码不随本仓库分发；请自行安装并保留上游许可证。
+
+连接更新后的 DSH 媒体适配器后，Windows x64 可在「设置 → 语音」点「一键配置语音」，一起准备本地语音转文字和免费中文语音回复。首次自动下载约 300 MB，不用手动安装 Python 或填写语音接口；教程只需跟着三步做。免费回复使用 Windows 已安装的中文声音，缺少时会提示添加。定制音色、唱歌和显卡加速在进阶里，需要另外准备对应运行环境和有权使用的素材；基础语音不包含这些功能。
+
+[本地插件代码与配置](docs/LOCAL-PLUGINS.md)、[高级语音与外置运行环境](docs/VOICE-RVC.md)和 [媒体配置示例](examples/bridge-media.example.yaml)可供接入时参考。源码没有角色音频、权重或训练数据。
 
 ## 验证与构建
 

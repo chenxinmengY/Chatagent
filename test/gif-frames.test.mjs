@@ -1,0 +1,9 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {gifStoryboard} from '../packages/dsh-bridge/gif-frames.mjs';
+let sharp;try{sharp=createRequire('D:/dsh/resources/app/dsh/package.json')('sharp');}catch{}
+test('实际GIF解码：覆盖首尾动作，帧序和非等长时序正确，仍只占一个模型图片位',{skip:!sharp},async()=>{
+ const width=96,height=64,colors=Array.from({length:16},(_,i)=>i===15?[20,30,240]:[240-i*8,20+i*8,40+i*10]),raw=Buffer.concat(colors.map(rgb=>{const pixels=Buffer.alloc(width*height*3);for(let i=0;i<pixels.length;i++)pixels[i]=rgb[i%3];return pixels;})),delay=[250,...Array(15).fill(30)];
+ const gif=await sharp(raw,{raw:{width,height:height*16,channels:3,pageHeight:height}}).gif({delay,loop:0}).toBuffer(),copy=Buffer.from(gif),view=await gifStoryboard(gif,sharp);
+ assert.deepEqual(gif,copy);assert.equal(view.totalFrames,16);assert.equal(view.frameCount,12);assert.equal(view.durationMs,700);assert.deepEqual(view.frames[0],{index:0,timeMs:0});assert.deepEqual(view.frames.at(-1),{index:15,timeMs:670});assert.equal(new Set(view.frames.map(f=>f.index)).size,12);assert.ok(view.frames.every((f,i)=>i===0||f.index>view.frames[i-1].index&&f.timeMs>view.frames[i-1].timeMs));
+ const decoded=await sharp(view.data).raw().toBuffer({resolveWithObject:true}),pixel=(x,y)=>[...decoded.data.subarray((y*decoded.info.width+x)*3,(y*decoded.info.width+x)*3+3)];assert.equal(decoded.info.width,1536);assert.equal(decoded.info.height,1038);const first=pixel(192,186),last=pixel(1344,878);assert.ok(first[0]>200&&first[2]<80,JSON.stringify(first));assert.ok(last[2]>200&&last[0]<80,JSON.stringify(last));
+});
+test('只有一帧的GIF不会声称观察到了动作或生成伪造后续帧',{skip:!sharp},async()=>{const bytes=await sharp({create:{width:30,height:20,channels:3,background:'#3377cc'}}).gif().toBuffer(),view=await gifStoryboard(bytes,sharp);assert.equal(view.totalFrames,1);assert.equal(view.frameCount,1);assert.deepEqual(view.frames,[{index:0,timeMs:0}]);});

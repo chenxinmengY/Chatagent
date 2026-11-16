@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import {DatabaseSync} from 'node:sqlite';
 import {sandbox} from './helpers.mjs';import {createDiyPlugins} from '../packages/diy-plugins/runtime.mjs';import {videoId,allowedMediaUrl} from '../packages/diy-plugins/media-source.mjs';
 import {startService} from '../apps/service/server.mjs';
+import {connectDiyPlugins} from '../packages/dsh-bridge/diy-plugins.mjs';
 function fixture(t,options={}){let cleanup;const box=sandbox({after:fn=>cleanup=fn});let calls=0;const publications=[];const root=path.join(box.root,'plugins');const runtime=createDiyPlugins({root,sessionId:'isolated-chat',generate:async()=>{calls++;return '今天和你聊了许多，我把这些小事写在日记里。';},persona:()=>({name:'测试鱼',text:'只依据当前聊天。'}),history:()=>[{role:'user',text:'今天去上课了'}],publish:p=>publications.push(p),now:()=>Date.parse('2026-11-05T14:00:00Z'),...options});t.after(async()=>{await runtime.close();cleanup();});return {runtime,root,publications,calls:()=>calls};}
 test('DIY plugins default off, settings use CAS, diary is idempotent and only shares when explicitly enabled',async t=>{
  const {runtime,publications,calls}=fixture(t);assert.throws(()=>runtime.start('fish-notebook',{requestId:'first'}),/PLUGIN_DISABLED/);await runtime.tick();assert.equal(calls(),0);
@@ -22,6 +23,14 @@ test('media records preserve actual evidence, cancel stops publication and unkno
  const db=new DatabaseSync(path.join(root,'plugins.sqlite'));db.prepare("UPDATE jobs SET state='unknown' WHERE id='watch-2'").run();db.close();runtime.save('media-browser',{...runtime.status('media-browser')[0].settings,automatic:true,quietStart:0,quietEnd:0});await runtime.tick();assert.equal(runtime.status('media-browser')[0].jobs.length,2);
 });
 test('B站 source restricts video URLs and download origins',()=>{assert.equal(videoId('https://www.bilibili.com/video/BV1rDx46VENg'),'BV1rDx46VENg');assert.equal(videoId(''),null);assert.throws(()=>videoId('http://127.0.0.1/a'));assert.throws(()=>allowedMediaUrl('https://bilivideo.com.evil.test/a'));assert.throws(()=>allowedMediaUrl('http://cdn.bilivideo.com/a'));assert.equal(allowedMediaUrl('https://cdn.bilivideo.com/a').hostname,'cdn.bilivideo.com');});
+
+test('DIY plugins honor another background task even when the native agent is idle',async t=>{
+ let cleanup,musicBusy=true;const {root}=sandbox({after:fn=>cleanup=fn}),agent={status:'idle',session:{id:'synthetic'},ctx:{tools:{register:()=>()=>{}}}};
+ const runtime=connectDiyPlugins({ctx:{get:()=>null},agent,config:{root},llm:null,imported:()=>null,publish:()=>assert.fail('No publication'),busy:()=>musicBusy});
+ t.after(async()=>{await runtime.close();cleanup();});runtime.save('fish-notebook',{...runtime.status('fish-notebook')[0].settings,enabled:true,automatic:true});
+ assert.equal(runtime.status('fish-notebook')[0].schedule.reason,'busy');assert.throws(()=>runtime.start('fish-notebook',{requestId:'while-listening'}),/PLUGIN_BUSY/);assert.equal(runtime.isRunning(),false);
+ musicBusy=false;runtime.start('fish-notebook',{requestId:'after-listening'});assert.equal(runtime.isRunning(),true);await runtime.settled('fish-notebook');assert.equal(runtime.isRunning(),false);
+});
 test('desktop plugin API parses settings before forwarding and retains actionable conflicts',async t=>{
  let cleanup;const box=sandbox({after:fn=>cleanup=fn}),calls=[];
  const service=await startService({dataRoot:path.join(box.root,'chat'),backend:{pluginStatus:()=>[{id:'fish-notebook'}],pluginAction:(id,action,body)=>{calls.push({id,action,body});if(body.revision!==0)throw Error('PLUGIN_SETTINGS_CHANGED');return {...body,revision:1};}}});

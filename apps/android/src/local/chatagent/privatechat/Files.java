@@ -14,7 +14,7 @@ public final class Files extends ContentProvider {
   static boolean valid(File file, JSONObject metadata) throws Exception { return file.isFile() && file.length() == metadata.getLong("bytes") && hash(file).equals(metadata.getString("sha256")); }
   private File file(Uri uri) throws FileNotFoundException { String name = uri.getLastPathSegment(); if (name == null || !name.matches("[a-f0-9]{64}")) throw new FileNotFoundException(); return new File(getContext().getFilesDir(), "media/" + name); }
   public boolean onCreate() { return true; }
-  public String getType(Uri uri) { return "application/octet-stream"; }
+  public String getType(Uri uri) { String type=uri.getQueryParameter("type");return type!=null&&type.matches("[a-zA-Z0-9.+-]+/[a-zA-Z0-9.+-]+")?type:"application/octet-stream"; }
   public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException { if (!mode.equals("r")) throw new FileNotFoundException(); return ParcelFileDescriptor.open(file(uri), ParcelFileDescriptor.MODE_READ_ONLY); }
   public Cursor query(Uri uri, String[] projection, String selection, String[] args, String sort) { MatrixCursor result = new MatrixCursor(new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE}); try { File file = file(uri); result.addRow(new Object[]{uri.getQueryParameter("name"), file.length()}); } catch (Exception ignored) { } return result; }
   public Uri insert(Uri uri, ContentValues values) { throw new UnsupportedOperationException(); }

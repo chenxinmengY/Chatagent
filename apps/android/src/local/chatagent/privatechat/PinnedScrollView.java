@@ -8,7 +8,14 @@ final class PinnedScrollView extends ScrollView {
   private int pinnedY;
   private boolean resized, resizeBottom;
   private int resizeY;
+  private boolean restoring, restoreBottom;
+  private int restoreY;
+  private int prependHeight=-1;
   PinnedScrollView(Context context){super(context);}
+  boolean nearBottom(int margin){return restoring?restoreBottom:bottom(getHeight())-getScrollY()<=margin;}
+  void restoreAfterLayout(boolean latest,int y){restoring=true;restoreBottom=latest;restoreY=y;requestLayout();}
+  void followLatest(){prependHeight=-1;restoreAfterLayout(true,0);}
+  void retainAfterPrepend(int height,int y){restoring=true;restoreBottom=false;restoreY=y;prependHeight=height;requestLayout();}
   void pinPosition(){if(!pinned){pinnedY=getScrollY();pinned=true;}}
   boolean positionPinned(){return pinned;}
   void releasePosition(){if(!pinned)return;final int y=pinnedY;super.scrollTo(0,y);pinned=false;}
@@ -24,7 +31,10 @@ final class PinnedScrollView extends ScrollView {
   @Override protected void onLayout(boolean changed,int l,int t,int r,int b){
     super.onLayout(changed,l,t,r,b);
     if(pinned)super.scrollTo(0,pinnedY);
+    else if(restoring)super.scrollTo(0,restoreBottom?bottom(b-t):restoreY+(prependHeight<0?0:Math.max(0,getChildAt(0).getHeight()-prependHeight)));
     else if(resized)super.scrollTo(0,resizeBottom?bottom(b-t):resizeY);
+    restoring=false;
+    prependHeight=-1;
     resized=false;
   }
 }

@@ -43,7 +43,7 @@ test('merge boundaries exclude other devices and stale messages', t => {
     const policy={...DEFAULT_POLICY,mergeMs:1000}; const first=store.submit(input('a',now)); store.submit(input('b',now,'b','other')); now+=1100;
     assert.deepEqual(store.claim({policy}).memberIds,[first.id]); store.complete(first.id,'ok');
     const second=store.claim({policy}); assert.equal(second.text,'b'); store.complete(second.id,'ok');
-    const stale=store.submit({...input('old',now),queuedAt:now-31*60000});store.submit(input('new',now));now+=2000;assert.equal(stale.state,'awaiting_confirmation');assert.equal(store.claim({policy}),null);
+    const stale=store.submit({...input('old',now),queuedAt:now-31*60000}),fresh=store.submit(input('new',now));now+=2000;assert.equal(stale.state,'awaiting_confirmation');assert.deepEqual(store.claim({policy}).memberIds,[fresh.id]);assert.equal(store.message(stale.id).state,'awaiting_confirmation');
   }finally{store.close();}
 });
 test('mode and attachment boundaries never merge across a request', t => {
@@ -92,7 +92,7 @@ test('context maintenance caps retries, respects disabled threshold and never de
   assert.equal((await maintainMode({...base,policy:{enabled:true,maxTokens:0}})).state,'disabled');
   const done=await maintainMode({...base,signature:'new',compact:async()=>({})});assert.equal(done.state,'compacted');
 });
-test('management endpoints require admin scope; local stop does not call a model', async t=>{
+test('management endpoints require admin scope; old stop phrase is ordinary chat', async t=>{
   const box=sandbox(t);let calls=0;const service=await startService({dataRoot:path.join(box.root,'service'),backend:{reply:async()=>{calls++;return 'test';}},devicePort:0});
   try{
     const boot=await(await fetch(service.url+'/v1/bootstrap')).json(),headers={'X-Chatagent-Token':boot.token,'Content-Type':'application/json'};
@@ -100,7 +100,8 @@ test('management endpoints require admin scope; local stop does not call a model
     const prefs=await(await fetch(service.url+'/v1/preferences',{headers})).json();prefs.policy.maxMessages=3;
     assert.equal((await fetch(service.url+'/v1/preferences',{headers,method:'POST',body:JSON.stringify(prefs)})).status,200);
     assert.equal((await fetch(service.url+'/v1/preferences',{headers,method:'POST',body:JSON.stringify(prefs)})).status,409);
-    await fetch(service.url+'/v1/messages',{headers,method:'POST',body:JSON.stringify({...input('stop',Date.now(),'停止分段'),expectedMode:boot.mode,expectedModeRevision:boot.modeRevision})});await service.tick();assert.equal(calls,0);
+    await fetch(service.url+'/v1/messages',{headers,method:'POST',body:JSON.stringify({...input('stop',Date.now(),'停止分段'),expectedMode:boot.mode,expectedModeRevision:boot.modeRevision})});await service.tick();assert.equal(calls,1);
+    assert.equal(service.store.history().find(m=>m.text==='停止分段').state,'completed');
     const invitation=await(await fetch(service.url+'/v1/pairing/invitations',{headers,method:'POST',body:'{}'})).json();
     const deviceToken=randomBytes(32).toString('hex');
     const device=await(await fetch(service.deviceUrl+'/v1/pairing/claim',{headers:{'Content-Type':'application/json'},method:'POST',body:JSON.stringify({credential:invitation.credential,deviceToken,name:'test'})})).json();

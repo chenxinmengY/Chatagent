@@ -1,0 +1,9 @@
+# Merge into your existing bridge plugin config; replace all paths.
+# Each optional adapter needs its own prepared runtime. No tokens or identities here.
+mediaAdapter: file:///C:/Chatagent/packages/dsh-bridge/local-media.mjs
+mediaOptions:
+  attachmentsRoot: C:/Chatagent/private/client/chat/attachments
+  ttsRoot: C:/ChatagentRuntime/tts
+  rvcVoiceProfile: C:/Chatagent/private/rvc-profile.private.json
+# localPluginsRoot: C:/Chatagent/private/local-plugins
+# Enable only after following docs/LOCAL-PLUGINS.md.

@@ -1,10 +1,11 @@
 import {randomUUID} from 'node:crypto';
 import {createPeriodicProactive} from './periodic-proactive.mjs';
+import {visibleReplyText} from './reply-control.mjs';
 // One attempt per last user message. A restart may reconcile proof, never rerun.
 export function createProactiveScheduler({store,backend,preferences,now,random}){
   const db=store.db;db.exec("CREATE TABLE IF NOT EXISTS proactive_runs(id TEXT PRIMARY KEY,anchor TEXT UNIQUE NOT NULL,day TEXT NOT NULL,at INTEGER NOT NULL,state TEXT NOT NULL); UPDATE proactive_runs SET state='unknown' WHERE state='running'");
   let periodic;
-  const save=(row,text)=>{store.publish({deliveryId:row.id,text});db.prepare("UPDATE proactive_runs SET state='completed' WHERE id=?").run(row.id);};
+  const save=(row,text)=>{text=visibleReplyText(text);if(text.trim())store.publish({deliveryId:row.id,text});db.prepare('UPDATE proactive_runs SET state=? WHERE id=?').run(text.trim()?'completed':'silent',row.id);};
   return {async tick(){
     const p=preferences.read().policy;if(!p.proactiveEnabled||!backend?.proactive)return;
     if(p.proactiveSchedule==='periodic'){periodic??=createPeriodicProactive({store,backend,preferences,now,random});return periodic.tick();}

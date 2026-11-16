@@ -1,0 +1,16 @@
+{
+  "root": "C:/ChatagentRuntime/my-rvc",
+  "rvcRoot": "C:/ChatagentRuntime/rvc",
+  "python": "C:/ChatagentRuntime/rvc/env/Scripts/python.exe",
+  "launcherPython": "C:/Python311/python.exe",
+  "weights": "my-voice.pth",
+  "index": "my-voice.index",
+  "weightsHash": "REPLACE_WITH_YOUR_WEIGHTS_SHA256",
+  "indexHash": "REPLACE_WITH_YOUR_INDEX_SHA256",
+  "separation": "C:/ChatagentRuntime/separation",
+  "codecPython": "C:/ChatagentRuntime/codec/python.exe",
+  "singingDml": {
+    "python": "C:/ChatagentRuntime/directml/Scripts/python.exe",
+    "adapter": 0
+  }
+}

@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {randomBytes} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {assertPlain} from '../packages/migration/standby-capture.mjs';
+const [destination,sessionId]=process.argv.slice(2);
+if(!destination||!path.isAbsolute(destination)||!/^chatagent-[a-f0-9-]{36}$/.test(sessionId??''))throw Error('USAGE: prepare-local-plugins <new-absolute-root> <chatagent-session-id>');
+const source=fileURLToPath(new URL('../packages/local-user-plugins/',import.meta.url)),root=path.resolve(destination);
+assertPlain(root);
+const relative=path.relative(source,root);
+if(fs.existsSync(root)||!relative||(!relative.startsWith('..'+path.sep)&&!path.isAbsolute(relative)))throw Error('LOCAL_PLUGIN_DESTINATION_REFUSED');
+fs.cpSync(source,root,{recursive:true,errorOnExist:true,force:false});
+const write=(name,data)=>{const file=path.join(root,name);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(data,null,2)+'\n',{flag:'wx'});};
+// This compatibility key is local to Chatagent; it is not a discovered WeChat identity.
+write('chatagent-binding.json',{sessionId,account:randomBytes(32).toString('hex'),key:'wechat:private:1',remindersEnabled:false});
+write('config/wechatagent.json',{wechat:{whitelist:{private:['1']}}});
+write('config/plugins.json',{version:1,plugins:{}});
+write('config/media-settings.json',{version:1,timezone:'Asia/Shanghai',video:{enabled:false,dailyRounds:3,roundMinutes:20,dailyMinutes:60,tokenLimit:2000000,windows:[],allowIdleOutsideWindows:false,idleMinutes:30,gapMinutes:30},music:{enabled:false,dailyRounds:5,roundMinutes:5,dailyMinutes:25,windows:[],allowIdleOutsideWindows:false,idleMinutes:30,gapMinutes:30}});
+write('plugins/course-query/assets/timetable.json',{schemaVersion:1,revision:'empty',timezone:'Asia/Shanghai',conflicts:[],bells:[],coveredDates:[],courses:[]});
+console.log(JSON.stringify({root,sessionId,pluginsEnabled:false,automaticMediaEnabled:false,remindersEnabled:false}));

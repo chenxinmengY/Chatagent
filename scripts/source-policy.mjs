@@ -3,11 +3,15 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 
 export function assertPublicSource(name,bytes,{privateLiterals=[]}={}){
+  if(/(?:^|\/)\.verification-tmp(?:\/|$)/i.test(name))throw Error('SOURCE_PRIVATE_FILE_REFUSED: '+name);
+  if(/(?:^|\/)(?:state|cache|backups|models|\.venv|__pycache__)(?:\/|$)|(?:^|\/)timetable\.json$|\.(?:pth|pt|ckpt|safetensors|onnx|gguf|index|npy|npz|wav|mp3|m4a|flac|ogg|silk|mp4|pyc|exe|dll|pyd)$/i.test(name))throw Error('SOURCE_PRIVATE_FILE_REFUSED: '+name);
   if(name.includes('\\')||name.startsWith('/')||name.split('/').includes('..')||/(?:^|\/)(?:data|private|verification|artifacts|shared-files|node_modules|\.git|\.local-signing)(?:\/|$)|\.private\.|(?:^|\/)\.env(?!\.example$)|\.(?:sqlite(?:-wal|-shm)?|db|key|pem|p12|pfx|jks|apk|idsig|log|zip)$/i.test(name))throw Error('SOURCE_PRIVATE_FILE_REFUSED: '+name);
   if(name.endsWith('.wasm')){
     if(name!=='packages/companion-capabilities/vendor/silk-wasm/lib/silk.wasm'||createHash('sha256').update(bytes).digest('hex')!=='88152af59af535b8056ac806710824b2259a361027451b494f175f48fb39c807')throw Error('SOURCE_UNREVIEWED_BINARY: '+name);
     return;
   }
+  // Only the approved application artwork may bypass the binary-content check.
+  if(name==='apps/branding/app-icon.png'&&createHash('sha256').update(bytes).digest('hex')==='4b277e954379272cccbdfeea201f948a391598c6b70d94b4fb420e9461324df4')return;
   const text=bytes.toString('utf8');
   if(bytes.includes(0)||/(?:sk-(?:proj-|ant-)?[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AIza[\w-]{30,}|-----BEGIN (?:[A-Z ]*PRIVATE KEY)|wxid_[a-z0-9]{10,}|[a-z0-9-]+\.tail[0-9a-f]+\.ts\.net|[A-Za-z]:[\\/]+Users[\\/]+[^\s'"\\/]+)/i.test(text)||privateLiterals.some(value=>value.length>=4&&text.includes(value)))throw Error('SOURCE_PRIVATE_CONTENT_REFUSED: '+name);
 }

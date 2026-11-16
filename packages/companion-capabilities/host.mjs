@@ -70,10 +70,10 @@ export function createCapabilityHost({ root, capsule, now = Date.now, providers 
   };
   const notify = (id, text, mode) => media.text(id + '-notice', text, mode);
   const engine = providers.singingWorker ?? { ready: false, state: 'unavailable', run: unavailable, close: async () => {} };
-  const worker = { get ready() { return engine.ready; }, get state() { return engine.state; }, close: () => engine.close(), cancel: id => engine.cancel?.(id),
+  const worker = { get ready() { return engine.ready; }, readyFor: id => engine.readyFor?.(id) ?? engine.ready, get state() { return engine.state; }, close: () => engine.close(), cancel: id => engine.cancel?.(id),
     async run(args) {
       ownedFile(root, args.inputPath);
-      const signal = AbortSignal.any([args.signal, AbortSignal.timeout(300000)]), cancel = () => engine.cancel?.(args.id);
+      const signal = AbortSignal.any([args.signal, AbortSignal.timeout(args.voiceId==='mansui'?1200000:450000)]), cancel = () => engine.cancel?.(args.id);
       signal.addEventListener('abort', cancel, { once: true }); let result;
       try { result = await bounded(() => engine.run({ ...args, signal }), signal); } finally { signal.removeEventListener('abort', cancel); }
       args.signal.throwIfAborted();
@@ -103,7 +103,7 @@ export function createCapabilityHost({ root, capsule, now = Date.now, providers 
   // The original singing service remains the authority for invitations, cache,
   // cancellation and unknown receipts. Only its delivery adapter is replaced.
   const singing = createSingingService({ directory: folder('singing'), scope, now, allowed: () => !closed, worker,
-    source: providers.singingSource ?? { resolve: unavailable, prepare: unavailable }, recipeDigest: providers.recipeDigest ?? sha('not-connected'),
+    source: providers.singingSource ?? { resolve: unavailable, prepare: unavailable }, recipeDigest: providers.recipeDigest ?? sha('not-connected'), selectVoice:providers.selectSingingVoice,
     rows: () => rows, transport, encodeWhole: createMp3Encoder({ directory: folder('mp3'), ...codecs }),
     notification: { isReady: () => !!media.binding, withLock: (_key, fn) => fn(), send: async ({ deliveryId, text }) => { media.text(deliveryId, text); return { confirmed: true, delivered: 'database-confirmed' }; } }
   });

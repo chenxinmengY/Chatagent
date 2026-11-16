@@ -25,9 +25,10 @@ export function validatePreferences(value) {
   if (Object.keys(p).some(k => !Object.hasOwn(DEFAULT_POLICY, k)) || !integer(p.maxMessages, 0, 20) || !integer(p.mergeMs, 0, 60000) || !integer(p.minIntervalMs, 0, 60000) || typeof p.contextEnabled !== 'boolean' || !integer(p.contextMaxTokens, 4000, 2000000) || !integer(p.contextIdleSeconds, 15, 3600)) throw fault('INVALID_CHAT_POLICY', 400);
   for (const list of [value.personas, value.groups, value.categories]) {
     if (list.length > 100 || new Set(list.map(x => x.id)).size !== list.length || list.some(x => !/^[a-zA-Z0-9_-]{1,100}$/.test(x.id ?? '') || !name(x.name))) throw fault('INVALID_LIBRARY', 400);
-    if (new Set(list.map(x => x.name.trim().toLowerCase())).size !== list.length) throw fault('DUPLICATE_NAME', 400);
+    const visible = list === value.personas ? list.filter(p => !p.archived) : list;
+    if (new Set(visible.map(x => x.name.trim().toLowerCase())).size !== visible.length) throw fault('DUPLICATE_NAME', 400);
   }
-  if (value.personas.some(p => typeof p.text !== 'string' || !p.text.trim() || p.text.includes('\0') || Buffer.byteLength(p.text) > 60000 || p.categoryId !== null && !value.categories.some(c => c.id === p.categoryId))) throw fault('INVALID_PERSONA', 400);
+  if (value.personas.some(p => p.archived !== undefined && typeof p.archived !== 'boolean' || typeof p.text !== 'string' || !p.text.trim() || p.text.includes('\0') || Buffer.byteLength(p.text) > 60000 || p.categoryId !== null && !value.categories.some(c => c.id === p.categoryId))) throw fault('INVALID_PERSONA', 400);
   if (Object.keys(value.modes).some(m => !modes.includes(m))) throw fault('INVALID_MODE', 400);
   for (const mode of modes) {
     const m = value.modes[mode];
@@ -49,7 +50,7 @@ export class Preferences {
     validatePreferences(value);
     return (transactional ? fn => this.store.transaction(fn) : fn => fn())(() => {
       const old = this.read(); if (value.revision !== old.revision) throw fault('PREFERENCES_CHANGED');
-      const next = { ...value, revision: old.revision + 1 };
+      const next = { ...value, personas: value.personas.filter(p => !p.archived || Object.values(value.modes).some(m => m.personaId === p.id)), revision: old.revision + 1 };
       // Keep previous revisions for local rollback; included in the normal SQLite backup.
       this.store.db.prepare('INSERT INTO settings(key,value) VALUES(?,?)').run('preferences-history-' + old.revision + '-' + randomUUID(), JSON.stringify(old));
       this.store.db.prepare("UPDATE settings SET value=? WHERE key='preferences'").run(JSON.stringify(next)); return next;

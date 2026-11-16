@@ -12,11 +12,15 @@ $entry=Join-Path $repo $(if($bridgeMode){'scripts\start-bridge.mjs'}elseif($work
 if ((-not $bridgeMode -and -not $workspaceMode -and $configuration.mode -notin @('local-rehearsal','configured-model')) -or $configuration.port -lt 37821 -or $configuration.port -gt 37999 -or -not (Test-Path -LiteralPath $entry)) { throw 'Invalid workspace configuration.' }
 $url='http://127.0.0.1:'+$configuration.port
 $listener=Get-NetTCPConnection -LocalPort $configuration.port -State Listen -ErrorAction SilentlyContinue
+function Test-CommandPath([string]$command,[string]$expected) {
+  $argument=[regex]::Escape($expected.Replace('/','\'))
+  return [regex]::IsMatch($command.Replace('/','\'),'(?:^|\s)(?:"'+$argument+'"|'+$argument+')(?=\s|$)',[Text.RegularExpressions.RegexOptions]::IgnoreCase)
+}
 function Assert-Owner($connection) {
   $process=Get-CimInstance Win32_Process -Filter ('ProcessId='+$connection.OwningProcess)
   $lock=Get-Content -LiteralPath (Join-Path $configuration.dataRoot 'chat\service.lock') -Raw -Encoding UTF8 | ConvertFrom-Json
   $birth=[DateTimeOffset]::new((Get-Process -Id $process.ProcessId).StartTime.ToUniversalTime()).ToUnixTimeMilliseconds()
-  if ($process.Name -ne 'node.exe' -or $lock.pid -ne $process.ProcessId -or $lock.birthMs -ne $birth -or -not $process.CommandLine.Contains($entry) -or -not $process.CommandLine.Contains($configPath)) { throw 'Port belongs to another process. No process was stopped.' }
+  if ($process.Name -ne 'node.exe' -or $lock.pid -ne $process.ProcessId -or $lock.birthMs -ne $birth -or -not (Test-CommandPath $process.CommandLine $entry) -or -not (Test-CommandPath $process.CommandLine $configPath)) { throw 'Port belongs to another process. No process was stopped.' }
 }
 if ($listener) { Assert-Owner $listener } else {
   $node=Get-Command node.exe -ErrorAction Stop

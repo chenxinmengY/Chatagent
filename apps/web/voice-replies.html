@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>语音 · fish with me</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/desktop.css"><link rel="stylesheet" href="/manage.css"><link rel="stylesheet" href="/voice-replies.css"></head>
+<body><aside></aside><main class="archive-page"><header><h1>设置</h1></header><section class="archive-workspace voice-workspace">
+  <section class="management-card voice-intro">
+    <span class="voice-local">电脑本地 · 无需语音接口</span>
+    <h2>你说，她也说。</h2>
+    <p id="speech-setup-intro">点一次，配好语音转文字和免费语音回复。<br>不用填接口，也不用设置显卡。</p>
+    <p id="voice-current" role="status">正在检查语音配置…</p>
+    <div class="management-actions"><button id="voice-enable" class="voice-primary" disabled>一键配置语音</button><button id="voice-preview" disabled>试听一句</button></div>
+    <progress id="speech-progress" aria-label="语音包准备进度" max="100" hidden></progress>
+    <p id="voice-feedback" role="status" aria-live="polite"></p><p id="voice-error" role="alert"></p>
+    <audio id="voice-player" controls preload="none" aria-label="当前音色试听" hidden></audio>
+    <button id="voice-existing" class="voice-text-button" hidden>恢复原来的 AI 音色</button>
+    <p id="speech-setup-note" class="voice-small">首次需联网下载约 300 MB 语音包，已有可用转写时自动复用。之后在电脑本地转文字。免费声音偏朗读风格，原来的 AI 音色会保留。</p>
+  </section>
+  <section class="management-card voice-explainer"><h2>配好后，就这样聊</h2><ol><li><strong>你发语音：</strong>自动转文字，她根据文字理解。</li><li><strong>她回语音：</strong>对她说“用语音回复我”，收到后点播放。</li></ol><p>语音回复工具会一起开启，不用再找开关。配置只应用于当前聊天。</p><p><a href="/speech-guide#walk/freevoice/0">看图，跟着三步做 →</a> · <a href="/speech-guide#voice/agent">让 DSH / Codex 帮我配置 →</a></p></section>
+  <section id="voice-advanced" class="management-card voice-advanced"><h2>进阶，想用时再学</h2><details><summary>换成指定的声音说话</summary><ol><li>准备一段清楚的单人录音，以及录音里的原话。</li><li>在 AI 语音引擎中生成新的音色副本，接到当前聊天，再在语音页恢复 AI 音色。</li><li>回聊天请求一条短语音，听到新声音再使用。</li></ol><p>使用自己录制或明确授权的声音。当前需要电脑端配置。<a href="/speech-guide#walk/voice/0">一步步看图操作 →</a> · <a href="/speech-guide#voice/agent/custom">复制给 Agent 配置 →</a></p></details><details><summary>让她唱歌、换唱歌音色</summary><ol><li>准备匹配唱歌引擎的 RVC 音色模型，有配套索引时一并保留。</li><li>在独立唱歌环境加载模型，试唱一小段。</li><li>接到当前聊天，开启唱歌工具，再核对收到的声音。</li></ol><p>唱歌单独配置。<a href="/speech-guide#walk/singing/0">一步步看图操作 →</a> · <a href="/speech-guide#voice/agent/singing">复制给 Agent 配置 →</a></p></details><details><summary>A 卡 / N 卡：用显卡加快生成</summary><ol><li>打开任务管理器的“性能 → GPU”，看显卡名字。</li><li>A 卡（AMD）：先验证匹配的 HIP 说话引擎；唱歌使用单独的 DirectML 环境。</li><li>N 卡（NVIDIA）：当前应用尚无通用 CUDA 接入，先用基础语音。</li></ol><p>免费系统声音不用设置显卡。<a href="/speech-guide#voice/advanced">查看显卡教学 →</a> · <a href="/speech-guide#voice/agent/gpu">让 Agent 检查显卡 →</a></p></details></section>
+</section></main><script type="module" src="/voice-replies.js"></script><script type="module" src="/shell.js"></script></body></html>

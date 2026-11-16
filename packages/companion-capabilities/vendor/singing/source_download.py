@@ -14,6 +14,22 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent
+MAX_SECONDS = 600
+
+
+async def locate(module, bvid):
+    # Singing has its own duration budget; the listening downloader stays unchanged.
+    source = module.video.Video(bvid=bvid)
+    info = await asyncio.wait_for(source.get_info(), 20)
+    pages = info.get('pages', [])
+    if len(pages) != 1:
+        raise ValueError('SINGING_MULTIPART_REQUIRES_SELECTION')
+    page = pages[0]
+    cid, duration = page.get('cid'), page.get('duration')
+    if not isinstance(cid, int) or cid <= 0 or not isinstance(duration, (int, float)) or not 0 < duration <= MAX_SECONDS:
+        raise ValueError('SINGING_SOURCE_DURATION_LIMIT')
+    media = await asyncio.wait_for(source.get_download_url(cid=cid), 20)
+    return cid, module.select_audio_url(media.get('dash', {}).get('audio', [])), str(info.get('title', ''))[:256]
 
 def digest(file):
     h = hashlib.sha256()
@@ -45,16 +61,16 @@ def main():
     spec.loader.exec_module(module)
     sys.path.insert(0, str(a.owned_process_dir))
     from owned_process import spawn_owned, stop_owned_tree
-    cid, url, title = asyncio.run(module.locate(a.bvid))
+    cid, url, title = asyncio.run(locate(module, a.bvid))
     original, output = target/'source.m4a', target/'whole.wav'
     module.download(url, original)
     process = None
     try:
         with (target/'ffmpeg.log').open('xb') as log:
             process = spawn_owned(['ffmpeg', '-v','error','-nostdin','-threads','2','-i',str(original),
-                '-t','301','-ar','44100','-ac','2','-map_metadata','-1','-c:a','pcm_s24le',str(output)],
+                '-t',str(MAX_SECONDS+1),'-ar','44100','-ac','2','-map_metadata','-1','-c:a','pcm_s24le',str(output)],
                 stdout=log,stderr=subprocess.STDOUT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
-            if process.wait(timeout=20) != 0:
+            if process.wait(timeout=40) != 0:
                 raise ValueError('SINGING_SOURCE_DECODE_FAILED')
     finally:
         if process is not None:
@@ -63,7 +79,7 @@ def main():
         '-show_entries','stream=sample_rate,channels,duration_ts,time_base','-of','json',str(output)],
         timeout=10,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0)).decode('utf8'))['streams'][0]
     frames = int(details['duration_ts'])
-    if details['sample_rate']!='44100' or details['channels']!=2 or details['time_base']!='1/44100' or not 0 < frames <= 300*44100:
+    if details['sample_rate']!='44100' or details['channels']!=2 or details['time_base']!='1/44100' or not 0 < frames <= MAX_SECONDS*44100:
         raise ValueError('SINGING_SOURCE_DURATION_LIMIT')
     result = {'identity':{'bvid':a.bvid,'cid':cid,'sourceSha256':digest(original)},'path':str(output),
               'sha256':digest(output),'frames':frames,'seconds':frames/44100,'title':title,'completeEof':True}
@@ -74,6 +90,6 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as error:
-        message=str(error)
+        message=str(error).replace('MUSIC_', 'SINGING_', 1) if str(error).startswith('MUSIC_') else str(error)
         print(json.dumps({'error':message if re.fullmatch(r'(?:SINGING|MUSIC)_[A-Z_]+',message) else 'SINGING_SOURCE_FETCH_FAILED'}))
         sys.exit(1)

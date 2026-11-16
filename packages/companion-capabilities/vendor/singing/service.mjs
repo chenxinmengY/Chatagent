@@ -5,9 +5,14 @@ import {atomic,read,sha,checkedSegments} from './common.mjs';
 import {parseInvitation,stopIntent,outgoingProposal} from './intent.mjs';
 import {checkedMp3} from './mp3.mjs';
 
+function failureReason(code,stage){
+  const reasons={SINGING_SOURCE_DURATION_LIMIT:'原曲超过10分钟的时长上限，请换一个较短的版本',SINGING_MULTIPART_REQUIRES_SELECTION:'该视频包含多个分P，目前需要单个视频版本',SINGING_SOURCE_FETCH_FAILED:'未能获取原曲音频，请稍后再试或换一个公开视频',SINGING_SOURCE_DECODE_FAILED:'原曲音频解码失败',SINGING_SOURCE_SIZE_LIMIT:'原曲音频文件超过下载大小上限',SINGING_SOURCE_INCOMPLETE:'原曲音频下载不完整',SINGING_DOWNLOAD_TIMEOUT:'原曲音频下载超时',SINGING_CDN_REJECTED:'没有可用的公开音频下载地址',SINGING_NO_PUBLIC_AUDIO:'该视频没有可用的公开音轨',SINGING_WORKER_FAILED:'翻唱引擎制作失败',SINGING_WORKER_UNAVAILABLE:'翻唱引擎未能就绪',SINGING_WORKER_EXITED:'翻唱引擎意外退出'};
+  return reasons[code]??(stage==='source'?'获取或准备原曲音频失败':stage?.startsWith('send-')?'歌曲发送失败':'翻唱制作或音频校验失败');
+}
+
 // A single Bridge owns this state and its authenticated listener. There is no
 // task queue and recovery never starts a send or a generation.
-export function createSingingService({directory,scope,allowed,worker,source,transport,recipeDigest,rows=()=>[],onRecord=()=>{},beforeJob=()=>{},notification,encodeWhole,retention,now=Date.now}) {
+export function createSingingService({directory,scope,allowed,worker,source,transport,recipeDigest,selectVoice,rows=()=>[],onRecord=()=>{},beforeJob=()=>{},notification,encodeWhole,retention,now=Date.now}) {
   fs.mkdirSync(directory,{recursive:true});
   const stateFile=path.join(directory,'ledger.json');
   const state=fs.existsSync(stateFile)?read(stateFile):{schema:'wechat-singing-v1',jobs:[],cache:{}};
@@ -25,15 +30,16 @@ export function createSingingService({directory,scope,allowed,worker,source,tran
   let active=null,invitation=null,closed=false,background=Promise.resolve(),reconciling=null,notifying=null;
   const authorized=b=>!closed&&b?.sessionId===scope.sessionId&&b?.conversationKey===scope.conversationKey&&allowed(scope)===true;
   const binding={sessionId:scope.sessionId,conversationKey:scope.conversationKey};
-  const summary=job=>job?{id:job.id,status:job.status,stage:job.stage,bvid:job.request.bvid,mode:job.request.mode,deliveryKind:job.deliveryKind??'voice',cacheHit:job.cacheHit??false,totalSegments:job.parts?.filter(p=>p.kind!=='mp3').length??0,sentSegments:job.parts?.filter(p=>p.kind!=='mp3'&&p.status==='confirmed').length??0,totalFiles:job.parts?.filter(p=>p.kind==='mp3').length??0,sentFiles:job.parts?.filter(p=>p.kind==='mp3'&&p.status==='confirmed').length??0,elapsedSeconds:Math.max(0,(job.finishedAt??now())-job.request.createdAt)/1000,errorCode:job.error??null}:null;
+  const summary=job=>job?{id:job.id,status:job.status,stage:job.stage,bvid:job.request.bvid,mode:job.request.mode,...job.request.voiceId?{voiceId:job.request.voiceId}:{},deliveryKind:job.deliveryKind??'voice',cacheHit:job.cacheHit??false,totalSegments:job.parts?.filter(p=>p.kind!=='mp3').length??0,sentSegments:job.parts?.filter(p=>p.kind!=='mp3'&&p.status==='confirmed').length??0,totalFiles:job.parts?.filter(p=>p.kind==='mp3').length??0,sentFiles:job.parts?.filter(p=>p.kind==='mp3'&&p.status==='confirmed').length??0,elapsedSeconds:Math.max(0,(job.finishedAt??now())-job.request.createdAt)/1000,errorCode:job.error??null,...job.status==='error'?{errorMessage:failureReason(job.error,job.stage)}:{}}:null;
   const response=(status,extra={})=>({binding,status,...extra});
   const validInvite=id=>invitation?.id===id&&now()-invitation.request.createdAt<=300000&&!invitation.consumed;
-  const keyFor=(request,identity)=>sha(JSON.stringify({recording:identity,mode:request.mode,start:request.start??0,end:request.end??null,recipeDigest}));
+  const recipeFor=request=>request.voiceRecipe??recipeDigest;
+  const keyFor=(request,identity)=>sha(JSON.stringify({recording:identity,mode:request.mode,start:request.start??0,end:request.end??null,recipeDigest:recipeFor(request)}));
   const verifiedFor=(request,file)=>request.mode==='whole'?checkedMp3(file):checkedSegments(file);
   const manifestFor=(request,entry)=>request.mode==='whole'?entry?.mp3Manifest:entry?.segmentsManifest;
   const transportFor=part=>part?.kind==='mp3'?transport.file:transport;
   function cachedAvailable(request){
-    try{if(request.remake)return false;const recording=source.peek?.(request.bvid),entry=recording&&state.cache[keyFor(request,recording.identity)];return !!entry&&entry.recipeDigest===recipeDigest&&JSON.stringify(entry.source)===JSON.stringify(recording.identity)&&verifiedFor(request,manifestFor(request,entry)).manifestSha256===entry.manifestSha256;}catch{return false;}
+    try{if(request.remake)return false;const recording=source.peek?.(request.bvid),entry=recording&&state.cache[keyFor(request,recording.identity)];return !!entry&&entry.recipeDigest===recipeFor(request)&&JSON.stringify(entry.source)===JSON.stringify(recording.identity)&&verifiedFor(request,manifestFor(request,entry)).manifestSha256===entry.manifestSha256;}catch{return false;}
   }
   const check=(job,signal)=>{signal.throwIfAborted();if(closed||active?.job!==job||!authorized(binding)||job.cancelRequested) throw Error('SINGING_CANCELLED');};
   async function deliverNotice() {
@@ -73,14 +79,14 @@ export function createSingingService({directory,scope,allowed,worker,source,tran
       const entry=!job.request.remake&&state.cache[cacheKey];
       let manifest=manifestFor(job.request,entry);
       if(entry) {
-        try {const verified=verifiedFor(job.request,manifest);if(verified.manifestSha256!==entry.manifestSha256||entry.recipeDigest!==recipeDigest||JSON.stringify(entry.source)!==JSON.stringify(recording.identity))throw Error('cache changed');job.cacheHit=true;}
+        try {const verified=verifiedFor(job.request,manifest);if(verified.manifestSha256!==entry.manifestSha256||entry.recipeDigest!==recipeFor(job.request)||JSON.stringify(entry.source)!==JSON.stringify(recording.identity))throw Error('cache changed');job.cacheHit=true;}
         catch { manifest=null;job.cacheInvalid=true; }
       }
       if(!manifest) {
         job.status='making';job.stage='source';save();
         const input=await source.prepare(recording,job.request,{id:job.id,signal});check(job,signal);
-        job.preparedInput=input.path;job.workerStarted=true;job.workerOwnerReport=worker.ownershipReport;if(worker.runtimeDirectory)job.workerManifest=path.join(worker.runtimeDirectory,'jobs',job.id,'manifest.json');save();
-        const completed=await worker.run({id:job.id,inputPath:input.path,inputSha256:input.sha256,mode:job.request.mode,signal,onArtifacts:file=>{job.workerManifest=file;save();},onProgress:stage=>{if(active?.job===job){job.stage=stage;save();}}});
+        job.preparedInput=input.path;job.stage='worker';job.workerStarted=true;job.workerOwnerReport=worker.ownershipReport;if(worker.runtimeDirectory)job.workerManifest=path.join(worker.runtimeDirectory,'jobs',job.id,'manifest.json');save();
+        const completed=await worker.run({id:job.id,inputPath:input.path,inputSha256:input.sha256,mode:job.request.mode,voiceId:job.request.voiceId,signal,onArtifacts:file=>{job.workerManifest=file;save();},onProgress:stage=>{if(active?.job===job){job.stage=stage;save();}}});
         check(job,signal);
         if(job.request.mode==='whole'){
           if(typeof encodeWhole!=='function'||!transport.file)throw Error('SINGING_MP3_UNAVAILABLE');
@@ -91,7 +97,7 @@ export function createSingingService({directory,scope,allowed,worker,source,tran
       await beforeJob({signal});
       check(job,signal);
       const manifestKey=job.request.mode==='whole'?'mp3Manifest':'segmentsManifest';
-      state.cache[cacheKey]={[manifestKey]:manifest,manifestSha256:verified.manifestSha256,source:recording.identity,recipeDigest,createdAt:now()};
+      state.cache[cacheKey]={[manifestKey]:manifest,manifestSha256:verified.manifestSha256,source:recording.identity,recipeDigest:recipeFor(job.request),createdAt:now()};
       job.status='ready';job.stage='checked';job[manifestKey]=manifest;
       job.parts=verified.parts.map(part=>({...part,deliveryId:sha(job.id+'\0'+part.index),status:'queued'}));save();
       // Every part is validated before the first irreversible request. Each
@@ -129,7 +135,7 @@ export function createSingingService({directory,scope,allowed,worker,source,tran
         const requestedAt=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(job.request.createdAt);
         const subject='你在'+requestedAt+'点唱的 '+job.request.bvid+'（'+(job.request.mode==='whole'?'整首':'翻唱片段')+'）';
         const media=job.deliveryKind==='mp3'?'MP3附件':'语音';
-        const text=subject+(uncertain?'有'+media+'的发送结果没能确认，我已停下该次任务的后续发送，不会自动补发。':sent?'没能完成，已停止该次任务的后续发送，已确认发送的'+media+'会保留。':'没能完成，已经停下来了，没有发送该次翻唱的'+media+'。你可以稍后重新邀请我再试一次。');
+        const text=subject+(uncertain?'有'+media+'的发送结果没能确认，我已停下该次任务的后续发送，不会自动补发。':sent?'没能完成，已停止该次任务的后续发送，已确认发送的'+media+'会保留。':'没能完成，已经停下来了，没有发送该次翻唱的'+media+'。原因：'+failureReason(job.error,job.stage)+'。');
         job.failureNotice={deliveryId:sha(job.id+'\0failure-notice'),text,status:'queued',attempts:0,createdAt:now()};
       }
       try{save();}finally{if(active?.job===job)active=null;}
@@ -168,6 +174,7 @@ export function createSingingService({directory,scope,allowed,worker,source,tran
       if(!authorized(binding)||message.platform!=='wechat'||message.kind!=='private'||String(message.conversation_id)!==scope.conversationKey.split(':')[2]||message.outgoing||message.forwardedRecord||message.quoteReply||message.interaction==='pat')return;
       const age=now()-Number(message.timestamp)*1000;
       if(!Number.isFinite(age)||age>90000||age< -5000)return;
+      const pending=invitation&&!invitation.consumed?invitation.request:null;
       invitation=null;
       if(stopIntent(message.text)){stop();return;}
       const history=rows(scope.conversationKey);
@@ -183,24 +190,26 @@ export function createSingingService({directory,scope,allowed,worker,source,tran
       }
       const latest=state.jobs.at(-1)?.request;
       if(latest&&now()-latest.createdAt<=300000&&(!selected||selected.bvid===latest.bvid))selected={...latest};
-      const request=parseInvitation(message,{proposal:outgoingProposal(history,now()),selected,now:now()});
+      const request=parseInvitation(message,{proposal:outgoingProposal(history,now()),selected,pending,previousRequest:latest,now:now()});
+      if(request && selectVoice){const choice=selectVoice(message.text, request.voiceId);Object.assign(request,choice);}
       if(request)invitation={id:randomUUID(),request,consumed:state.jobs.some(j=>j.request.messageId===request.messageId)};
     },
     async control(body) {
       if(!authorized(body))throw Error('SINGING_SCOPE_DENIED');
       if(body.action==='stop')return stop();
+      const ready=worker.readyFor?.(invitation?.request.voiceId??active?.job.request.voiceId)??worker.ready;
       const workerStatus=worker.state==='unavailable'?'unavailable':'worker_preparing';
       if(body.action==='status'){
         const job=active?.job??state.jobs.at(-1);
         if(!active&&!reconciling&&job?.parts?.some(p=>p.status==='unknown'&&p.receiptContext&&transportFor(p)?.reconcile))reconciling=reconcile(job);
-        return response(active?'working':job?.status??(worker.ready?'ready':workerStatus),{workerReady:worker.ready,job:summary(job),...(reconciling?{notice:'正在只读核对未确认片段；不会补发，也不会继续发送旧任务的其余片段。'}:{})});
+        return response(active?'working':job?.status??(ready?'ready':workerStatus),{workerReady:ready,job:summary(job),...(reconciling?{notice:'正在只读核对未确认片段；不会补发，也不会继续发送旧任务的其余片段。'}:{})});
       }
-      if(body.action==='context')return response(active?'working':invitation?.request.needsSelection?'needs_selection':worker.ready||invitation&&cachedAvailable(invitation.request)?'ready':workerStatus,{workerReady:worker.ready,inviteId:invitation&&!invitation.consumed?invitation.id:null,invitation:invitation&&!invitation.consumed?invitation.request:null,job:summary(active?.job??state.jobs.at(-1))});
+      if(body.action==='context')return response(active?'working':invitation?.request.needsSelection?'needs_selection':ready||invitation&&cachedAvailable(invitation.request)?'ready':workerStatus,{workerReady:ready,inviteId:invitation&&!invitation.consumed?invitation.id:null,invitation:invitation&&!invitation.consumed?invitation.request:null,job:summary(active?.job??state.jobs.at(-1))});
       if(body.action!=='sing')throw Error('SINGING_ACTION_INVALID');
       if(active)return response('busy',{job:summary(active.job)});
       if(!validInvite(body.inviteId))return response('needs_invitation');
       if(invitation.request.needsSelection)return response('needs_selection');
-      if(!worker.ready&&!cachedAvailable(invitation.request))return response(workerStatus);
+      if(!ready&&!cachedAvailable(invitation.request))return response(workerStatus);
       const job={id:'song-'+randomUUID(),conversationKey:scope.conversationKey,sessionId:scope.sessionId,request:structuredClone(invitation.request),deliveryKind:invitation.request.mode==='whole'?'mp3':'voice',status:'preparing',stage:'source',createdAt:now(),parts:[]};
       invitation.consumed=true;state.jobs.push(job);save();
       const controller=new AbortController();active={job,controller};

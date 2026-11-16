@@ -2,7 +2,7 @@
   {
     "file": "singing/service.mjs",
     "source": "wechat-singing/service.mjs",
-    "sha256": "273a6b6eadf9b9e01fe7fa7e9149f93be1afe4121f2373bdde91def6efb4535b"
+    "sha256": "3ec64c8d9e7b2836cac79f68cef6335833f194524db14030a1ac77b6e9a61930"
   },
   {
     "file": "singing/common.mjs",
@@ -12,7 +12,7 @@
   {
     "file": "singing/intent.mjs",
     "source": "wechat-singing/intent.mjs",
-    "sha256": "9daea9807d3ab178c3b85e613c36bd7a27d768e648345f9bb41f63ee430cd805"
+    "sha256": "123c50aa344fa87d75a80901430abad7718c806bb549516b7fd410ec34510808"
   },
   {
     "file": "singing/mp3.mjs",
@@ -77,12 +77,12 @@
   {
     "file": "singing/source.mjs",
     "source": "wechat-singing/source.mjs",
-    "sha256": "8d960cad6e254f01009b103b90e0e86a6e676ed42e62ea530e8abe551edcf52b"
+    "sha256": "2bf7a48c2bb03a7972f69a21618b85a59f0ece917691747b2733fc0395bacf32"
   },
   {
     "file": "singing/source_download.py",
     "source": "wechat-singing/source_download.py",
-    "sha256": "a339eb931254f08d5285ebdf815aca3ec522440807ac65085a5a64acc1208e68"
+    "sha256": "4f17b37719c74130e9c396fb149e36ee1787e9221434522345192be6f15185f1"
   },
   {
     "file": "singing/anonymous-audio-download.py",

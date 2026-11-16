@@ -1,0 +1,15 @@
+{
+  "recipe": "sensevoice-cpu-win64-20261108",
+  "platform": "win32",
+  "arch": "x64",
+  "files": [
+    {"id":"python","kind":"python","url":"https://www.python.org/ftp/python/3.13.17/python-3.13.17-embeddable-amd64.zip","bytes":11441932,"sha256":"0ba1ee4bfcbdc3a559d27e2e9ce76d04a7839947a23f46375872c755c0d463b8"},
+    {"id":"numpy","kind":"wheel","url":"https://files.pythonhosted.org/packages/cb/3b/d58c12eafcb298d4e6d0d40216866ab15f59e55d148a5658bb3132311fcf/numpy-2.2.6-cp313-cp313-win_amd64.whl","bytes":12610885,"sha256":"b0544343a702fa80c95ad5d3d608ea3599dd54d4632df855e4c8d24eb6ecfa1c"},
+    {"id":"sherpa-core","kind":"wheel","url":"https://files.pythonhosted.org/packages/68/ea/8f02cc34c19d956697dda2f2c470c14cd6b7af77f3ae855c514a86039b68/sherpa_onnx_core-2.0.1-py3-none-win_amd64.whl","bytes":16663244,"sha256":"08890e9ea23ed2f59f81d5840c63b6b5cc8674d0f6e48d9069126a848aa0e022"},
+    {"id":"sherpa","kind":"wheel","url":"https://files.pythonhosted.org/packages/14/f1/b6460d62b670a08ec5bd4e8efc678378473e438274817fa8a7d6096f9eba/sherpa_onnx-2.0.1-cp313-cp313-win_amd64.whl","bytes":2179778,"sha256":"9b3a0f2b97cd300747a44a78f134e729afe45ae627e7110e764710235b1828c9"},
+    {"id":"ffmpeg","kind":"ffmpeg","url":"https://files.pythonhosted.org/packages/2c/c6/fa760e12a2483469e2bf5058c5faff664acf66cadb4df2ad6205b016a73d/imageio_ffmpeg-0.6.0-py3-none-win_amd64.whl","bytes":31246824,"sha256":"02fa47c83703c37df6bfe4896aab339013f62bf02c5ebf2dce6da56af04ffc0a"},
+    {"id":"model","kind":"file","target":"model/model.int8.onnx","url":"https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/resolve/2365baeacb507f821a0c8120fcee3d484dba7a07/model.int8.onnx","bytes":239233841,"sha256":"c71f0ce00bec95b07744e116345e33d8cbbe08cef896382cf907bf4b51a2cd51"},
+    {"id":"tokens","kind":"file","target":"model/tokens.txt","url":"https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/resolve/2365baeacb507f821a0c8120fcee3d484dba7a07/tokens.txt","bytes":315894,"sha256":"f449eb28dc567533d7fa59be34e2abca8784f771850c78a47fb731a31429a1dc"},
+    {"id":"model-license","kind":"file","target":"licenses/SenseVoice-LICENSE.txt","url":"https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/resolve/2365baeacb507f821a0c8120fcee3d484dba7a07/LICENSE","bytes":71,"sha256":"221c6df10b0931a5629adad671ea48fb7747e034c414b6d2bfa275bc3dd4ea17"}
+  ]
+}

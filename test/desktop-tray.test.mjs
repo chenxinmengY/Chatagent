@@ -22,6 +22,7 @@ test('实际 Windows 窗口：关闭和最小化进托盘，恢复、启动失�
 using System;
 using System.Drawing;
 using System.IO;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -36,8 +37,18 @@ internal static class DesktopTrayCheck {
         typeof(Form).GetMethod("OnFormClosing",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(window,new object[]{closing});
         Check(!closing.Cancel,"Windows shutdown must not be canceled");
     }
-    [STAThread] private static void Main() {
+    [STAThread] private static void Main(string[] args) {
+        if(args.Length>0 && args[0]=="--activate") { Environment.ExitCode=ChatagentWindow.ActivateExistingWindow(false)?0:2;return; }
         try { Run(); } catch(Exception error) { Console.Error.WriteLine(error.Message);Environment.ExitCode=1; }
+    }
+    private static void Reopen(Form window) {
+        var start=new ProcessStartInfo(Assembly.GetExecutingAssembly().Location,"--activate");start.UseShellExecute=false;start.CreateNoWindow=true;
+        using(var process=Process.Start(start)) {
+            var deadline=DateTime.UtcNow.AddSeconds(5);
+            while(!process.HasExited && DateTime.UtcNow<deadline){Pump();Thread.Sleep(10);}
+            Check(process.HasExited && process.ExitCode==0,"Second process must signal existing window and exit without a dialog");
+            Pump();Check(window.Visible && window.WindowState!=FormWindowState.Minimized,"Second launch must restore the same hidden window");
+        }
     }
     private static void Run() {
         Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
@@ -51,6 +62,7 @@ internal static class DesktopTrayCheck {
             window.Show();Pump();
             SendMessage(window.Handle,0x0112,new IntPtr(0xF060),IntPtr.Zero);Pump();
             Check(!window.Visible && !window.IsDisposed && closed==0 && tray.Visible,"Title-bar close state: visible="+window.Visible+" disposed="+window.IsDisposed+" closed="+closed+" tray="+tray.Visible);
+            Reopen(window);window.Hide();
             tray.ContextMenuStrip.Items[0].PerformClick();Pump();
             Check(window.Visible && window.WindowState==FormWindowState.Normal,"Tray open must restore the window");
             window.WindowState=FormWindowState.Minimized;Pump();
@@ -62,6 +74,7 @@ internal static class DesktopTrayCheck {
             while(!loading.Text.StartsWith("私人空间暂时无法打开") && DateTime.UtcNow<deadline) { Pump();Thread.Sleep(10); }
             Check(loading.Text.Contains("isolated startup failure"),"Isolated startup failure must be visible");
             window.Close();Pump();Check(!window.Visible && !window.IsDisposed && tray.Visible,"Close after startup failure must still hide to tray");
+            Reopen(window);window.Hide();
             SystemClose(window);
             Check(tray.ContextMenuStrip.Items[2].Text.Contains("后台服务继续运行"),"Exit must explain that the service is independent");
             tray.ContextMenuStrip.Items[2].PerformClick();Pump();

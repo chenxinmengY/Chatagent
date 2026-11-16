@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { recoveryAction } from './recovery.mjs';
 import { splitReply } from './preferences.mjs';
+import { stripEmptyThinking, visibleReplyText } from './reply-control.mjs';
 
 export function fault(code, status = 409) { return Object.assign(new Error(code), { status }); }
 const validId = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{1,100}$/.test(value);
@@ -58,9 +59,11 @@ export class ChatStore {
     if (!validId(deliveryId) || typeof text !== 'string' || !text.trim() || text.length > 32000 || !['social', 'assistant'].includes(mode)) throw fault('INVALID_PLUGIN_DELIVERY', 400);
     if (!Array.isArray(attachments) || attachments.length > 8 || new Set(attachments.map(f => f?.id)).size !== attachments.length || attachments.some(f => !f || !/^[a-f0-9-]{36}$/.test(f.id ?? '') || typeof f.name !== 'string' || !f.name.trim() || !Number.isSafeInteger(f.bytes) || f.bytes < 0 || !/^[a-f0-9]{64}$/.test(f.sha256 ?? '') || typeof f.mediaType !== 'string')) throw fault('INVALID_ATTACHMENTS', 400);
     attachments = attachments.map(({ id, name, bytes, sha256, mediaType }) => ({ id, name, bytes, sha256, mediaType }));
+    text = visibleReplyText(text);
     return this.transaction(() => {
       const old = this.lookup('plugin-delivery', deliveryId);
-      if (old) { if (old.text !== text || old.mode !== mode || JSON.stringify(old.attachments) !== JSON.stringify(attachments)) throw fault('PLUGIN_DELIVERY_ID_REUSED'); return old; }
+      if (old) { if (stripEmptyThinking(old.text) !== text || old.mode !== mode || JSON.stringify(old.attachments) !== JSON.stringify(attachments)) throw fault('PLUGIN_DELIVERY_ID_REUSED'); return old; }
+      if (!text.trim() && !attachments.length) return null;
       const id = randomUUID(), now = this.now();
       this.db.prepare("INSERT INTO messages(id,device,client_id,role,text,mode,queued_at,created_at,state,attachments) VALUES(?,'plugin-delivery',?,'assistant',?,?,?,?,'completed',?)").run(id, deliveryId, text, mode, now, now, JSON.stringify(attachments));
       const message = this.message(id); this.event(message); return message;
@@ -108,10 +111,50 @@ export class ChatStore {
     const run = this.db.prepare('SELECT body FROM reply_runs WHERE id=?').get(row.id);
     return run ? { ...row, ...JSON.parse(run.body) } : row;
   }
+  activity(canStop = false) {
+    const queued = this.db.prepare("SELECT COUNT(*) n FROM messages WHERE role='user' AND state='queued'").get().n;
+    const row = this.hydrate(this.db.prepare("SELECT * FROM messages WHERE role='user' AND state='running' ORDER BY seq LIMIT 1").get());
+    const part = this.db.prepare("SELECT parent,COUNT(*) n FROM reply_parts WHERE state='queued' GROUP BY parent ORDER BY MIN(due_at) LIMIT 1").get();
+    const stopped = this.db.prepare("SELECT m.* FROM messages m JOIN reply_runs r ON r.id=m.id WHERE m.state='unknown' AND json_extract(r.body,'$.stopRequestedAt') IS NOT NULL ORDER BY m.seq DESC LIMIT 1").get();
+    const request = row ?? (part ? this.message(part.parent) : this.hydrate(stopped));
+    const run = this.workRequest(request);
+    return { state: row ? run.stopRequestedAt != null ? 'stopping' : 'working' : part ? 'sending' : stopped ? 'stop-unknown' : queued ? 'queued' : 'idle',
+      requestId: request?.id ?? null, revision: request?.revision ?? null, pendingParts: part?.n ?? 0, queued,
+      canStop: Boolean(request && (part || canStop && (run?.stopRequestedAt == null || row?.state === 'running'))) };
+  }
+  requestStop(id, revision) {
+    if (typeof id !== 'string' || !Number.isSafeInteger(revision)) throw fault('INVALID_DECISION', 400);
+    return this.transaction(() => {
+      const request = this.message(id), run = this.workRequest(request);
+      if (!request || request.role !== 'user' || request.revision !== revision) throw fault('MESSAGE_STATE_CHANGED');
+      if (request.state === 'completed') {
+        const cancelled = this.db.prepare("UPDATE reply_parts SET state='cancelled' WHERE parent=? AND state='queued'").run(id).changes;
+        if (!cancelled) throw fault('MESSAGE_STATE_CHANGED');
+        return { request, cancelled, partsOnly: true };
+      }
+      if (!['running','unknown'].includes(request.state) || request.state === 'unknown' && run.stopRequestedAt == null) throw fault('MESSAGE_STATE_CHANGED');
+      if (this.db.prepare("SELECT 1 FROM reply_runs,json_each(reply_runs.body,'$.memberIds') member WHERE member.value=? AND reply_runs.id!=? LIMIT 1").get(id,id)) throw fault('MESSAGE_STATE_CHANGED');
+      const saved = this.db.prepare('SELECT body FROM reply_runs WHERE id=?').get(id);
+      this.db.prepare('INSERT OR REPLACE INTO reply_runs VALUES(?,?)').run(id, JSON.stringify({ ...saved ? JSON.parse(saved.body) : {}, stopRequestedAt: run.stopRequestedAt ?? this.now() }));
+      this.db.prepare("UPDATE reply_parts SET state='cancelled' WHERE parent=? AND state='queued'").run(id);
+      return { request: this.workRequest(request), partsOnly: false };
+    });
+  }
+  finishStopped(id) {
+    return this.transaction(() => {
+      const run = this.workRequest(this.message(id));
+      if (run?.stopRequestedAt == null) throw fault('STOP_NOT_REQUESTED');
+      for (const member of run.memberIds ?? [id]) if (['running','unknown'].includes(this.message(member)?.state)) this.update(member, 'cancelled');
+      this.db.prepare("UPDATE reply_parts SET state='cancelled' WHERE parent=? AND state='queued'").run(id);
+    });
+  }
   claim({ allowAttachments = false, policy = null, mode = null } = {}) {
     return this.transaction(() => {
-      const first = this.db.prepare("SELECT * FROM messages WHERE role='user' AND (? IS NULL OR mode=?) AND state IN ('queued','awaiting_confirmation','running','unknown') ORDER BY seq LIMIT 1").get(mode,mode);
-      if (!first || first.state !== 'queued') return null;
+      // Unresolved or unconfirmed old requests are retained without replay;
+      // only an active run must hold up later, independently queued messages.
+      if (this.db.prepare("SELECT 1 FROM messages WHERE role='user' AND (? IS NULL OR mode=?) AND state='running' LIMIT 1").get(mode,mode)) return null;
+      const first = this.db.prepare("SELECT * FROM messages WHERE role='user' AND (? IS NULL OR mode=?) AND state='queued' ORDER BY seq LIMIT 1").get(mode,mode);
+      if (!first) return null;
       if (!allowAttachments && JSON.parse(first.attachments).length) return null;
       // Preserve the original client timestamp for idempotency, but cap an
       // accepted fast device clock at server receipt time for aging decisions.
@@ -147,7 +190,17 @@ export class ChatStore {
     return this.transaction(() => {
       const request = this.message(id);
       if (!request || (recoveredRevision === null ? request.state !== 'running' : request.state !== 'unknown' || request.revision !== recoveredRevision)) throw fault('RUN_NOT_ACTIVE');
-      const run = this.workRequest(request), parts = splitReply(text, run.policy?.maxMessages ?? 1);
+      const run = this.workRequest(request);
+      if (run.stopRequestedAt != null) {
+        for (const member of run.memberIds ?? [id]) this.update(member, 'cancelled');
+        return null;
+      }
+      text = visibleReplyText(text);
+      if (!text.trim()) {
+        for (const member of run.memberIds ?? [id]) this.update(member, 'completed');
+        return null;
+      }
+      const parts = splitReply(text, run.policy?.maxMessages ?? 1);
       const replyId = randomUUID();
       this.db.prepare(`INSERT INTO messages(id,role,text,mode,queued_at,created_at,state,parent)
         VALUES(?,'assistant',?,?,?,?,'completed',?)`).run(replyId, parts[0], request.mode, this.now(), this.now(), id);
@@ -162,12 +215,14 @@ export class ChatStore {
     return this.transaction(() => {
       const part = this.db.prepare("SELECT * FROM reply_parts WHERE state='queued' ORDER BY due_at,part LIMIT 1").get();
       if (!part || part.due_at > this.now()) return null;
+      const text = visibleReplyText(part.text);
+      if (!text.trim()) { this.db.prepare("UPDATE reply_parts SET state='completed',text=? WHERE id=?").run(text, part.id); return null; }
       const request = this.workRequest(this.message(part.parent)), interval = request?.policy?.minIntervalMs ?? 1000;
       const last = this.db.prepare("SELECT MAX(created_at) at FROM messages WHERE role='assistant'").get().at ?? 0;
       if (this.now() - last < interval) return null;
       const at = this.now();
-      this.db.prepare("INSERT INTO messages(id,device,client_id,role,text,mode,queued_at,created_at,state) VALUES(?,'reply-part',?,'assistant',?,?,?,?,'completed')").run(part.id, part.id, part.text, part.mode, at, at);
-      this.db.prepare("UPDATE reply_parts SET state='completed' WHERE id=?").run(part.id);
+      this.db.prepare("INSERT INTO messages(id,device,client_id,role,text,mode,queued_at,created_at,state) VALUES(?,'reply-part',?,'assistant',?,?,?,?,'completed')").run(part.id, part.id, text, part.mode, at, at);
+      this.db.prepare("UPDATE reply_parts SET state='completed',text=? WHERE id=?").run(text, part.id);
       const message = this.message(part.id); this.event(message); return message;
     });
   }

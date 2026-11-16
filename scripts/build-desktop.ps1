@@ -1,4 +1,4 @@
-﻿param([string]$WebViewSdk='', [string]$Configuration='')
+﻿param([string]$WebViewSdk='', [string]$Configuration='', [string]$OutputDirectory='', [switch]$Distribution)
 $ErrorActionPreference='Stop'
 Import-Module (Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Utility\Microsoft.PowerShell.Utility.psd1') -ErrorAction Stop
 $repo=Split-Path -Parent $PSScriptRoot
@@ -11,33 +11,33 @@ if (-not $WebViewSdk) {
   if((Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash -ne '90778DEB1B77E36292828B4B5833C9255C27533F40E0DDD55891AE718944EDC4'){throw 'WebView2 SDK package checksum mismatch'}
   if(-not(Test-Path -LiteralPath $WebViewSdk)){Expand-Archive -LiteralPath $package -DestinationPath $WebViewSdk}
 }
-$output=Join-Path $repo 'artifacts\windows\Chatagent-0.4.4'
+$version=(Get-Content -LiteralPath (Join-Path $repo 'package.json') -Raw -Encoding UTF8 | ConvertFrom-Json).version
+$output=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path $repo ('artifacts\windows\Chatagent-'+$version)}
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 $core=Join-Path $WebViewSdk 'lib\net462\Microsoft.Web.WebView2.Core.dll'
 $forms=Join-Path $WebViewSdk 'lib\net462\Microsoft.Web.WebView2.WinForms.dll'
 foreach ($file in @($core,$forms,(Join-Path $WebViewSdk 'runtimes\win-x64\native\WebView2Loader.dll'))) { Copy-Item -LiteralPath $file -Destination $output -Force }
 Copy-Item -LiteralPath (Join-Path $WebViewSdk 'LICENSE.txt') -Destination (Join-Path $output 'WebView2-LICENSE.txt') -Force
 Copy-Item -LiteralPath (Join-Path $WebViewSdk 'NOTICE.txt') -Destination (Join-Path $output 'WebView2-NOTICE.txt') -Force
-Add-Type -AssemblyName System.Drawing
-$bitmap=New-Object Drawing.Bitmap 64,64
-$graphics=[Drawing.Graphics]::FromImage($bitmap)
-$graphics.SmoothingMode='AntiAlias';$graphics.Clear([Drawing.Color]::FromArgb(232,242,255))
-$blue=New-Object Drawing.SolidBrush ([Drawing.Color]::FromArgb(67,137,235))
-$graphics.FillEllipse($blue,10,21,43,31)
-$tail=[Drawing.Point[]]@((New-Object Drawing.Point 46,37),(New-Object Drawing.Point 62,27),(New-Object Drawing.Point 59,46))
-$graphics.FillPolygon($blue,$tail);$graphics.FillEllipse([Drawing.Brushes]::White,17,39,25,9);$graphics.FillEllipse([Drawing.Brushes]::MidnightBlue,22,30,4,4)
-$icon=[Drawing.Icon]::FromHandle($bitmap.GetHicon());$stream=[IO.File]::Create((Join-Path $output 'Chatagent.ico'));try{$icon.Save($stream)}finally{$stream.Dispose();$graphics.Dispose();$blue.Dispose();$bitmap.Dispose()}
+& (Join-Path $PSScriptRoot 'build-icons.ps1') -Target Windows -OutputDirectory $output
 $compiler='C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 & $compiler /nologo /target:winexe /platform:x64 /optimize+ /utf8output ('/out:'+(Join-Path $output 'Chatagent.exe')) ('/win32icon:'+(Join-Path $output 'Chatagent.ico')) /reference:System.dll /reference:System.Core.dll /reference:System.Drawing.dll /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll ('/reference:'+$core) ('/reference:'+$forms) (Join-Path $repo 'apps\desktop\Chatagent.cs')
 if($LASTEXITCODE -ne 0){throw 'Desktop compile failed'}
 Copy-Item -LiteralPath (Join-Path $repo 'apps\desktop\bootstrap.ps1') -Destination $output -Force
+if($Distribution){
+  if(Test-Path -LiteralPath (Join-Path $output 'desktop.private.json')){throw 'Distribution must use a new output directory without private configuration.'}
+  Copy-Item -LiteralPath (Join-Path $repo 'apps\desktop\installed-bootstrap.ps1') -Destination $output -Force
+  @{format='fish-with-me-installed-v1';version=$version} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'installed.json') -Encoding UTF8
+  Get-FileHash -LiteralPath (Join-Path $output 'Chatagent.exe') -Algorithm SHA256 | ConvertTo-Json
+  exit 0
+}
 if(-not $Configuration){
   $bridgeConfiguration=Join-Path $repo 'data\bridge-launch.private.json'
   $Configuration=if(Test-Path -LiteralPath $bridgeConfiguration){$bridgeConfiguration}else{Join-Path $repo 'data\standby-v0210-launch.private.json'}
 }
 @{workspace=$repo;configuration=[IO.Path]::GetFullPath($Configuration)} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'desktop.private.json') -Encoding UTF8
 @'
-Chatagent 0.4.4 — 本机桌面版
+fish with me — 本机桌面版
 双击 Chatagent.exe。请将同目录 DLL、图标和配置文件一起保留。
 复用已核验的本地备用服务；服务未运行时尝试启动备用服务。
 点右上角“×”或最小化会收进托盘，双击托盘图标可打开。右键托盘可退出桌面端。

@@ -3,11 +3,16 @@ param(
   [string]$JdkRoot = 'C:\Program Files\Java\jdk-17',
   [string]$BuildTools = '37.0.0',
   [switch]$VoiceAcceptance,
+  [string]$KeystorePath = '',
+  [string]$KeystoreAlias = 'chatagent-development',
+  [string]$KeystorePasswordFile = '',
+  [string]$OutputApk = '',
   [string]$BuildRoot = 'D:\ChatagentBuild',
   [string]$Platform = 'android-37.0'
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
+$version=(Get-Content -LiteralPath (Join-Path $repo 'package.json') -Raw -Encoding UTF8 | ConvertFrom-Json).version
 $source = Join-Path $repo 'apps\android'
 $output = Join-Path $repo 'artifacts\android'
 $build = Join-Path $BuildRoot ('android-' + [guid]::NewGuid().ToString('N'))
@@ -22,13 +27,14 @@ Run-Checked (Join-Path $JdkRoot 'bin\javac.exe') (@('-encoding','UTF-8','--relea
 Run-Checked (Join-Path $JdkRoot 'bin\jar.exe') @('cf',(Join-Path $build 'classes.jar'),'-C',(Join-Path $build 'classes'),'.')
 Run-Checked (Join-Path $toolsDir 'd8.bat') @('--lib',$platformJar,'--min-api','26','--output',(Join-Path $build 'dex'),(Join-Path $build 'classes.jar'))
 Copy-Item -LiteralPath (Join-Path $source 'res') -Destination (Join-Path $build 'res') -Recurse
+& (Join-Path $PSScriptRoot 'build-icons.ps1') -Target Android -OutputDirectory (Join-Path $build 'res')
 Copy-Item -LiteralPath (Join-Path $source 'assets') -Destination (Join-Path $build 'assets') -Recurse
 Copy-Item -LiteralPath (Join-Path $source 'AndroidManifest.xml') -Destination (Join-Path $build 'AndroidManifest.xml')
 if ($VoiceAcceptance) {
   $manifestPath = Join-Path $build 'AndroidManifest.xml'
   $manifestText = [IO.File]::ReadAllText($manifestPath)
   $manifestText = $manifestText.Replace('package="local.chatagent.privatechat"','package="local.chatagent.privatechat.voiceacceptance"').Replace('android:authorities="local.chatagent.privatechat.files"','android:authorities="local.chatagent.privatechat.voiceacceptance.files"')
-  $manifestText = $manifestText -replace 'android:label="[^"]+"','android:label="Chatagent Voice Test"'
+  $manifestText = $manifestText -replace 'android:label="[^"]+"','android:label="fish with me Voice Test"'
   foreach ($component in @('ChatApplication','MainActivity','ProfileActivity','SyncService','BootReceiver','Files')) { $manifestText = $manifestText.Replace(('android:name=".' + $component + '"'),('android:name="local.chatagent.privatechat.' + $component + '"')) }
   [IO.File]::WriteAllText($manifestPath,$manifestText,[Text.UTF8Encoding]::new($false))
 }
@@ -42,10 +48,18 @@ Run-Checked (Join-Path $toolsDir 'zipalign.exe') @('-f','-p','4',(Join-Path $bui
 $signing = Join-Path $repo '.local-signing'
 New-Item -ItemType Directory -Path $signing -Force | Out-Null
 $keystore = Join-Path $signing 'android-development.p12'
-if (-not (Test-Path -LiteralPath $keystore)) { Run-Checked (Join-Path $JdkRoot 'bin\keytool.exe') @('-genkeypair','-keystore',$keystore,'-storetype','PKCS12','-storepass','chatagent-development','-keypass','chatagent-development','-alias','chatagent-development','-keyalg','RSA','-keysize','3072','-validity','3650','-dname','CN=Chatagent Local Development','-noprompt') }
-$apk = Join-Path $output 'Chatagent-0.3.15-development.apk'
-if ($VoiceAcceptance) { $apk = Join-Path $output 'Chatagent-0.3.15-voice-acceptance.apk' }
-Run-Checked (Join-Path $toolsDir 'apksigner.bat') @('sign','--ks',$keystore,'--ks-key-alias','chatagent-development','--ks-pass','pass:chatagent-development','--key-pass','pass:chatagent-development','--out',$apk,(Join-Path $build 'aligned.apk'))
+if($KeystorePath){
+  $keystore=[IO.Path]::GetFullPath($KeystorePath)
+  if(-not(Test-Path -LiteralPath $keystore) -or -not $KeystorePasswordFile -or -not(Test-Path -LiteralPath $KeystorePasswordFile)){throw 'Release signing requires an existing keystore and private password file.'}
+  $passwordArgument='file:'+([IO.Path]::GetFullPath($KeystorePasswordFile))
+}else{
+  if (-not (Test-Path -LiteralPath $keystore)) { Run-Checked (Join-Path $JdkRoot 'bin\keytool.exe') @('-genkeypair','-keystore',$keystore,'-storetype','PKCS12','-storepass','chatagent-development','-keypass','chatagent-development','-alias','chatagent-development','-keyalg','RSA','-keysize','3072','-validity','3650','-dname','CN=Chatagent Local Development','-noprompt') }
+  $passwordArgument='pass:chatagent-development'
+}
+$apk = if($OutputApk){[IO.Path]::GetFullPath($OutputApk)}else{Join-Path $output ('fish-with-me-'+$version+'-development.apk')}
+if ($VoiceAcceptance) { $apk = Join-Path $output ('fish-with-me-'+$version+'-voice-acceptance.apk') }
+New-Item -ItemType Directory -Force -Path (Split-Path -Parent $apk) | Out-Null
+Run-Checked (Join-Path $toolsDir 'apksigner.bat') @('sign','--ks',$keystore,'--ks-key-alias',$KeystoreAlias,'--ks-pass',$passwordArgument,'--out',$apk,(Join-Path $build 'aligned.apk'))
 Run-Checked (Join-Path $toolsDir 'zipalign.exe') @('-c','-p','4',$apk)
 Run-Checked (Join-Path $toolsDir 'apksigner.bat') @('verify','--verbose','--print-certs',$apk)
 Get-FileHash -LiteralPath $apk -Algorithm SHA256 | Select-Object Algorithm,Hash,Path | ConvertTo-Json

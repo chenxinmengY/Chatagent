@@ -23,15 +23,18 @@ async def main():
     dash = download.get('dash', {})
     videos = sorted(dash.get('video', []), key=lambda r: (r.get('height', 99999), r.get('bandwidth', 99999999)))
     audios = sorted(dash.get('audio', []), key=lambda r: r.get('bandwidth', 99999999))
-    def url(row):
-        return row.get('baseUrl') or row.get('base_url') or row.get('url')
+    def urls(row):
+        primary = row.get('baseUrl') or row.get('base_url') or row.get('url')
+        backups = row.get('backupUrl') or row.get('backup_url') or []
+        return list(dict.fromkeys(u for u in [primary, *backups] if isinstance(u, str) and u))
     combined = download.get('durl', [])
-    video_url = url(videos[0]) if videos else url(combined[0]) if len(combined) == 1 else None
-    audio_url = url(audios[0]) if audios else video_url
-    if not video_url or not audio_url:
+    video_urls = urls(videos[0]) if videos else urls(combined[0]) if len(combined) == 1 else []
+    audio_urls = urls(audios[0]) if audios else video_urls
+    if not video_urls or not audio_urls:
         return {'error': 'PLUGIN_MEDIA_UNAVAILABLE'}
     return {'bvid': value, 'cid': page['cid'], 'title': str(info.get('title', ''))[:200], 'duration': duration,
-            'videoUrl': video_url, 'audioUrl': audio_url}
+            'videoUrl': video_urls[0], 'audioUrl': audio_urls[0],
+            'videoBackupUrls': video_urls[1:], 'audioBackupUrls': audio_urls[1:]}
 
 if __name__ == '__main__':
     try:

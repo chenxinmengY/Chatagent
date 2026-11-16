@@ -1,0 +1,10 @@
+{
+  "id": "daily-reminders",
+  "name": "事项提醒",
+  "version": "1.0.0",
+  "apiVersion": 2,
+  "host": "wechatagent",
+  "description": "在授权私聊管理一次性、每天和每周提醒。由配套微信后台按时发送，支持查看、修改、取消与稍后提醒；离线补发窗口20分钟。",
+  "permissions": ["storage"],
+  "requiresAccount": true
+}

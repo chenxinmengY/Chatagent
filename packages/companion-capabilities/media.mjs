@@ -4,6 +4,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { DatabaseSync } from 'node:sqlite';
 import { regular, fileSha, sha } from './vendor/singing/common.mjs';
+import { inspectVoiceWav } from './system-voice.mjs';
 const exec = promisify(execFile);
 
 export function ownedFile(root, file) {
@@ -22,6 +23,18 @@ export async function verifyAudio(file, { expectedHash, maxSeconds = 1800, signa
   const before = fileSha(file);
   if (expectedHash && before !== expectedHash) throw Error('CAPABILITY_AUDIO_CHANGED');
   if (fs.statSync(file).size > 64 * 1024 * 1024) throw Error('CAPABILITY_AUDIO_TOO_LARGE');
+  signal?.throwIfAborted();
+  // System.Speech writes uncompressed PCM. Validate those bytes directly so a
+  // new Windows installation can deliver replies without ffprobe on PATH.
+  const header = Buffer.alloc(44), fd = fs.openSync(file, 'r');
+  try { fs.readSync(fd, header, 0, header.length, 0); } finally { fs.closeSync(fd); }
+  if (header.toString('ascii', 0, 4) === 'RIFF' && header.toString('ascii', 8, 16) === 'WAVEfmt ' && header.readUInt16LE(20) === 1 && header.readUInt16LE(22) === 1 && header.readUInt32LE(24) === 24000 && header.readUInt16LE(34) === 16) {
+    let checked;
+    try { checked = inspectVoiceWav(file); } catch { throw Error('CAPABILITY_AUDIO_FORMAT'); }
+    if (checked.sha256 !== before || fileSha(file) !== before) throw Error('CAPABILITY_AUDIO_CHANGED');
+    if (checked.seconds > maxSeconds) throw Error('CAPABILITY_AUDIO_FORMAT');
+    return { sha256: before, seconds: checked.seconds, codec: 'pcm_s16le' };
+  }
   const opts = { windowsHide: true, timeout: 90000, maxBuffer: 65536, signal };
   const { stdout } = await exec(ffprobe, ['-v', 'error', '-show_entries', 'stream=codec_name,codec_type:format=duration', '-of', 'json', file], opts);
   const info = JSON.parse(stdout), seconds = Number(info.format?.duration);

@@ -13,6 +13,7 @@ export class BackupCoordinator {
     this.file = file; this.capture = capture; this.isIdle = isIdle; this.now = now; this.enabled = enabled; this.retryMs = retryMs; this.job = null;
     this.state = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : { format: 'chatagent-backup-jobs-v1', attempts: [], snapshots: [] };
     if (this.state.format !== 'chatagent-backup-jobs-v1' || !Array.isArray(this.state.attempts) || !Array.isArray(this.state.snapshots)) throw Error('INVALID_BACKUP_STATE');
+    if (typeof this.state.enabled === 'boolean') this.enabled = this.state.enabled;
     for (const attempt of this.state.attempts) if (attempt.state === 'capturing') { attempt.state = 'interrupted'; attempt.error = 'CAPTURE_INTERRUPTED'; }
     this.save();
   }
@@ -23,6 +24,7 @@ export class BackupCoordinator {
   }
   status() { return structuredClone({ enabled: this.enabled, running: Boolean(this.job), lastAttempt: this.state.attempts.at(-1) ?? null,
     lastComplete: this.state.snapshots.filter(item => item.status === 'complete' && item.published).at(-1) ?? null, retention: retentionPlan(this.state.snapshots) }); }
+  configure(enabled) { if (typeof enabled !== 'boolean') throw Error('INVALID_BACKUP_OPTIONS'); this.enabled = enabled; this.state.enabled = enabled; this.save(); return this.status(); }
   request(kind = 'manual') {
     if (!['manual', 'automatic'].includes(kind)) return Promise.reject(Error('INVALID_BACKUP_KIND'));
     if (this.job) return this.job;
@@ -30,8 +32,9 @@ export class BackupCoordinator {
     this.state.attempts.push(attempt); this.save();
     this.job = Promise.resolve().then(() => this.capture()).then(manifest => {
       if (manifest?.status !== 'complete' || typeof manifest.id !== 'string' || !Array.isArray(manifest.coverage) || !manifest.coverage.length) throw Error('BACKUP_NOT_COMPLETE');
-      const record = { id: manifest.id, kind, createdAt: manifest.createdAt ?? this.now(), status: 'complete', published: true, pinned: false, restoreVerified: false, coverage: manifest.coverage };
+      const record = { id: manifest.id, kind, createdAt: manifest.createdAt ?? this.now(), status: 'complete', published: true, pinned: false, restoreVerified: manifest.restoreVerified===true, coverage: manifest.coverage };
       if (this.state.snapshots.some(item => item.id === record.id)) throw Error('DUPLICATE_BACKUP_PUBLICATION');
+      if(manifest.retentionWarning)record.retentionWarning=manifest.retentionWarning;
       this.state.snapshots.push(record); attempt.state = 'published'; attempt.finishedAt = this.now(); attempt.snapshotId = record.id; this.save(); return manifest;
     }).catch(error => { attempt.state = 'failed'; attempt.finishedAt = this.now(); attempt.error = /^[A-Z_]+$/.test(error.message ?? '') ? error.message : 'CAPTURE_FAILED'; this.save(); throw error; })
       .finally(() => { this.job = null; });

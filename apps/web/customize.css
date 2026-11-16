@@ -9,3 +9,15 @@
 .migration-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}.migration-grid .management-field{margin:12px 0}.management-card h3{font-size:14px;margin:22px 0 8px}.capability-detail{padding:10px 0;border-bottom:1px solid var(--border)}.capability-detail h3{margin:0 0 7px}.capability-detail p{font-size:12px;line-height:1.8;color:#8197b2;margin:0}#fish-source{width:100%;max-width:600px}#fish-empty:empty{display:none}@media(max-width:700px){.migration-grid{grid-template-columns:1fr}}
 
 .appearance-actions{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px}
+
+/* Preview uses the same message surfaces and saved appearance as the chat. */
+#appearance-preview{padding:20px;border-radius:14px;overflow:hidden}
+#appearance-preview .preview-header{display:flex;align-items:center;gap:10px;padding-bottom:16px;color:var(--chat-muted,#586b80);font-size:15px}
+.preview-header img{width:36px;height:36px;border-radius:6px}.preview-header small{display:block;font-size:12px;margin-top:2px}
+#appearance-preview .message{margin:16px 0;min-height:36px}#appearance-preview .bubble{margin:0;width:fit-content;max-width:80%;line-height:1.7}
+#appearance-preview .preview-voice{width:150px;min-height:48px;color:#26364d;background:#fff;border-radius:var(--chat-radius,14px);font-size:var(--chat-font,15px)}
+#appearance-preview .user .preview-voice{background:var(--user-bubble,#e4efff)}
+.preview-file{padding:12px 16px;border-radius:var(--chat-radius,14px);background:#fff;color:#26364d;font-size:var(--chat-font,15px)}.preview-file small{display:block;font-size:12px;color:#586b80;margin-top:3px}
+.preview-composer{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #dce4ee;border-radius:12px;padding:12px 16px;margin-top:24px;color:#586b80;font-size:14px}
+.preview-send{padding:6px 14px;line-height:18px;background:var(--blue-hover,#2c66c3);color:var(--on-action,#fff);border-radius:999px;font-size:13px}
+@media(max-width:520px){#appearance-preview{padding:14px}#appearance-preview .bubble{max-width:100%}.preview-composer{padding:10px}}

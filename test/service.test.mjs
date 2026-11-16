@@ -162,7 +162,7 @@ test('恢复旧快照隔离其中所有未结束工作，不能重做备份后�
   } finally { if (restored) await restored.close(); await source.close(); }
 });
 
-test('首次同步保留两百条以外仍会阻塞会话的待核对消息', t => {
+test('首次同步保留两百条以外的待核对消息', t => {
   const box = sandbox(t), store = new ChatStore(path.join(box.root, 'chat.sqlite'), { now: () => origin });
   try {
     const blocker = store.submit(input('blocker'));

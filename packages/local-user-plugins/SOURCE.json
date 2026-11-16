@@ -1,0 +1,337 @@
+{
+  "repository": "https://github.com/sourcepro5/WeChatAgent",
+  "referenceCommit": "5cdedddc60936c550ce5c02558eb025a5350f48e",
+  "note": "Code-only local adaptations and extensions; runtime state, private configuration and timetable excluded. Original notices retained. SHA256 records describe imported files before public sanitization.",
+  "files": [
+    {
+      "path": "packages/dsh-social-bridge-plugin/deadline.mjs",
+      "sha256": "63132407bb93db02ad5258fd0ad62bf6e56387d9afc495bb37387eb18874f1a1",
+      "upstreamPath": "packages/dsh-social-bridge-plugin/deadline.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/extension-runtime/catalog.mjs",
+      "sha256": "3be28844d82ec1926ee6693c8c08bd14507b3cd334d7d4b6b0e6fc86a4abbcfa",
+      "upstreamPath": "packages/extension-runtime/catalog.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/extension-runtime/index.mjs",
+      "sha256": "72e806b28e9965e082e5b116b212a4f9fefc54c685039d85d8abb14591f6c0bd",
+      "upstreamPath": "packages/extension-runtime/index.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/extension-runtime/snapshots.mjs",
+      "sha256": "7d7bf53634c0a8c487c94efcf1db8e6de9fb0963a608b1bbd9fb596a159c0755",
+      "upstreamPath": "packages/extension-runtime/snapshots.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/media-experiences/admission.mjs",
+      "sha256": "45d7641eb503f93b3eaa004f83ef885d08d34e924217f7ff86986544a17b0706",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/media-experiences/ledger-chatagent.mjs",
+      "sha256": "1c43f6586e738a39e9e17677686f24e5631d5871f79ceed953e71b083773c39c",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/media-experiences/ledger.mjs",
+      "sha256": "9ac6f5ab8b57a1f2eb01bbca0cb65b7d0a7cd09a3bd3ffb2af6d266130558323",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/media-experiences/music-scheduler.mjs",
+      "sha256": "482c76720a969a5cc76c7d7a70bbf2faa3fc38095caec3dfd6858711747a2434",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/media-experiences/runtime.mjs",
+      "sha256": "d7e953fa6512164a959f47550c965354165cc285b5a8cdbe668a28a41872b3b8",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/media-experiences/settings.mjs",
+      "sha256": "368a7fde2827c22c0fe716950966f69d022f39429b1f8ae70221e72ad573f34b",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/plugin-api/catalog.mjs",
+      "sha256": "6d32cc841a5d8fb365d1e0eab2052afd985a0b4f462a0be3e94da09b004f31cb",
+      "upstreamPath": "packages/plugin-api/catalog.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/plugin-api/documents.mjs",
+      "sha256": "aed3169243882d9ab9e10468777edd8c2afcf3e78d439027c3031cfba30d8bf8",
+      "upstreamPath": "packages/plugin-api/documents.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/plugin-api/index.mjs",
+      "sha256": "b971d5299b30a75c8914ffe1c831238e8f58246f7b4e92759c1c8e19126361ac",
+      "upstreamPath": "packages/plugin-api/index.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/plugin-api/installer.mjs",
+      "sha256": "d2fb8004a03923d117d04b90732ae7834cda7bb217dd02deb136e90cbd4e6632",
+      "upstreamPath": "packages/plugin-api/installer.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/plugin-api/model-utility.mjs",
+      "sha256": "9ba43a568a6462bafe633d40247e015c862817e44c0567d671971a5c9826ec19",
+      "upstreamPath": "packages/plugin-api/model-utility.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/plugin-api/process.mjs",
+      "sha256": "d6f284e0f3e1412ac96861a6c8983f1b4003cad3b40daa670829c821895a2327",
+      "upstreamPath": "packages/plugin-api/process.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/plugin-api/worker.mjs",
+      "sha256": "c6ae1e9320fe93356245b419d25d86e71c66a0971f44db259b172c86c20a1816",
+      "upstreamPath": "packages/plugin-api/worker.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/plugin-api/zip.mjs",
+      "sha256": "63010454ffb2667b703f25d52dc879b5002422fbdc131667f60479997b8d712b",
+      "upstreamPath": "packages/plugin-api/zip.mjs",
+      "status": "modified"
+    },
+    {
+      "path": "packages/wechat-music/archive.mjs",
+      "sha256": "6a3e035613bfa21858dabcabe4e276febc8bc8ff0809bd568a32f0cead73bf91",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/configured-host.mjs",
+      "sha256": "853d9531fe4f7d65e0dca543d69635ad488e80c5e3dd9cd7a643968453598955",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/content-policy.mjs",
+      "sha256": "ae30a5a0d4a8200662f70724c6f4ffcc7efa985e66d91ae9a1120d5966a1db88",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/contracts.mjs",
+      "sha256": "70d999c594ad95a3563ebdfefad8c542d53bbfc627397251808579d18e20bd06",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/credential.ps1",
+      "sha256": "c5e72d47489a3617cf6fc098169f26afecb3e957a2ab16ee727422eab1f0f4f5",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/error-summary.mjs",
+      "sha256": "010cc962b9e16278376e33245e604f87f79eb6b30355ef7279cbc22eab6e3552",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/inference.mjs",
+      "sha256": "a763dafe0ad774368b22f6c36433422cac955b4d4f3fab50b1b584371bc0d5e8",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/intent.mjs",
+      "sha256": "e625b8ec952d4f72a89bb853abbc32c2ce36c44d7c9d10c036ead9e466026165",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/isolation.mjs",
+      "sha256": "3691f32594737f88de1e222f2fe22ad2905a372c6962b5498ecaefea9193c133",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/journal.mjs",
+      "sha256": "0880bd4d62c184b85a7593e7a58812e7ca14a11d4e74e204ff3c98b779e97848",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/lifecycle.mjs",
+      "sha256": "422da3d2175c27597ad493e0be9ec5317142cfe0c11cf32f7719f597b794f7d7",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/lyric-evidence.mjs",
+      "sha256": "45563e88890254f47e7039b169e4d91c737f413992cd45a240533200a66c4af8",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/music-bridge.mjs",
+      "sha256": "4a4d1b158b6bcb10a149cc77112b594f8d0912524d07e2a199afb67299857d58",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/music-tool.mjs",
+      "sha256": "df8e994439f6ee486211546ed7e5ab4a10abec1959589420265f610c9f51ecc0",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/music-turns.mjs",
+      "sha256": "8aa263a922ecfda2d8d90aebd1d130cf847e003229663b564dabfc5d8500a8f6",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/package.json",
+      "sha256": "a90fc33418afa2b9cbf4768524b021135b965ecdf993457505bfae3ac44a8428",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/pcm.mjs",
+      "sha256": "ee94bd390a0ad869afe40c920459faef2c87648758dacde6e3ad55013a6e86ee",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/remote-source.mjs",
+      "sha256": "d2e782ecf613bea91cdd06f833c2010990cf59452c2db730a4d87e02ec209ac1",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/scope.mjs",
+      "sha256": "d49bc047df0c5bb8792586a61a91c5a27a57aacf2e2f4e4970bc3c5dece5dca3",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/service.mjs",
+      "sha256": "3ef6eba147032f6d5dd176be378dd5090d1ab8e7c792d850c8bea154990f14d3",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/source-download.py",
+      "sha256": "59d6012fef76d7396b5dc5d6c7264420d04934e2ac034e65f22c684032aa70b4",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/subscription.mjs",
+      "sha256": "cd1c6f7d49e308dc4d14ccb51856728949ca4d6db3d37f82f2e3571c5fe94b70",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-music/tasks.mjs",
+      "sha256": "a775987b9d577586203537fefd216b56b5fd75cca758185d4e0faeac706bde56",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-short-voice/credential.ps1",
+      "sha256": "c5e72d47489a3617cf6fc098169f26afecb3e957a2ab16ee727422eab1f0f4f5",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-short-voice/hearing-core.mjs",
+      "sha256": "a45f61ed226646171f334409241d901993bce405b7d215cf9f0a675eeca58854",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-short-voice/live-hearing.mjs",
+      "sha256": "44bc80e5a0135cf34d7cedbc0554fe07948b878b12d6ac53a4837d8b927f1383",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "packages/wechat-short-voice/package.json",
+      "sha256": "36af4bb80fec3b440ebf55f00250403448d6fda60476bcbfa508b70813943afb",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "plugins/course-query/index.mjs",
+      "sha256": "0932e5caf2a9b127c4e4e0dbebd95d99aef09d426128845927dca7a3973ebaab",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "plugins/course-query/lib/query.mjs",
+      "sha256": "1ccb01c663a17c47e7b3d7ea7b03e63133cefa31ac833d6a2e0b087ab341ef24",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "plugins/course-query/plugin.json",
+      "sha256": "1c4a01996439ed1213ceea39e1721c93d537c53069a192323a5329dc897cbaf8",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "plugins/daily-reminders/index.mjs",
+      "sha256": "d44800a480abda827d446c1c71d3c455e9b98e97b50491c26dd924248fe81f6d",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "plugins/daily-reminders/lib/bridge-binding.mjs",
+      "sha256": "ecaf5de965920b7138cfd8b185b2e3ae9dad4709a4f8df84ae6fb07dde63960e",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "plugins/daily-reminders/lib/scheduler.mjs",
+      "sha256": "7c8e6f171d7803cca7be0877877fc54bc477ee23cb9e0400cab7a86f5969c787",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "plugins/daily-reminders/lib/store.mjs",
+      "sha256": "79c006951ecb7b05da657f30ac14c778a591ea35cd17991d4c1de252347d0d52",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "plugins/daily-reminders/lib/time.mjs",
+      "sha256": "d0754adecf996cbbc5d04804abd9cd8e2e1093d6af580d497ad853ee1c4cb058",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "plugins/daily-reminders/plugin.json",
+      "sha256": "d3ddf64e0f53e6b7f34a806330dc877ca7dde01ebf8a835a85c8bbda27486155",
+      "upstreamPath": null,
+      "status": "local-extension"
+    },
+    {
+      "path": "components/qq-bridge/src/safe-fetch.js",
+      "sha256": "4dc21516904bbdd9771aa85d388985b4c298ec05ed244f06909078b6b70e108a",
+      "upstreamPath": "components/qq-bridge/src/safe-fetch.js",
+      "status": "unchanged"
+    }
+  ]
+}

@@ -10,11 +10,16 @@ import { fileURLToPath } from 'node:url';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { backup, DatabaseSync } from 'node:sqlite';
 import { ChatStore, fault } from '../../packages/conversation/store.mjs';
+import { stripEmptyThinking } from '../../packages/conversation/reply-control.mjs';
 import { captureRuntimeBackup } from '../../packages/migration/runtime-backup.mjs';
 import { AttachmentStore, MAX_ATTACHMENT_BYTES, MAX_CHUNK_BYTES } from '../../packages/storage/attachments.mjs';
+import {StickerLibrary} from '../../packages/stickers/library.mjs';
 import { verifyLocalDatabase } from '../../packages/migration/local-restore.mjs';
 import { DeviceStore } from '../../packages/devices/store.mjs';
 import { BackupCoordinator } from '../../packages/migration/backup-coordinator.mjs';
+import { captureWorkspaceBackup, restoreWorkspaceBackup, workspaceCoverage, workspaceExcluded, completeWorkspaceCoverage, completeWorkspaceExcluded } from '../../packages/migration/workspace-backup.mjs';
+import {listDailyBackups,pruneDailyBackupsAsync} from '../../packages/migration/daily-backups.mjs';
+import {inventory,plainDirectory} from '../../packages/migration/runtime-backup.mjs';
 import { ownerRecord, ownerDefinitelyGone } from '../../packages/storage/process-owner.mjs';
 import { Preferences } from '../../packages/conversation/preferences.mjs';
 import { Profiles } from '../../packages/conversation/profiles.mjs';
@@ -58,7 +63,7 @@ function acquireLock(root) {
   return () => { if (JSON.parse(fs.readFileSync(file, 'utf8')).token === token) fs.unlinkSync(file); };
 }
 
-export async function startService({ dataRoot, port = 0, devicePort, deviceTls, deviceHost = '127.0.0.1', deviceHostname = deviceHost, automaticBackups = false, backupIdleMs = 5 * 60000, backend = null, preferencesSeed, modelOptions, now = Date.now, allowChatSpaces=true } = {}) {
+export async function startService({ dataRoot, port = 0, devicePort, deviceTls, deviceHost = '127.0.0.1', deviceHostname = deviceHost, automaticBackups = false, workspaceAutomaticBackups = false, backupIdleMs = 5 * 60000, backend = null, preferencesSeed, modelOptions, now = Date.now, allowChatSpaces=true, workspaceBarrier={active:false},stickerLibrary=null } = {}) {
   const tailAddress = /^100\.(\d+)\.(\d+)\.(\d+)$/.exec(deviceHost);
   const isTailAddress = isIP(deviceHost) === 4 && tailAddress && Number(tailAddress[1]) >= 64 && Number(tailAddress[1]) <= 127;
   if (deviceHost !== '127.0.0.1' && (!deviceTls || !isTailAddress)) throw fault('PRIVATE_TLS_LISTENER_REQUIRED');
@@ -75,62 +80,103 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
   try { profiles = new Profiles(store); preferences = new Preferences(store, preferencesSeed); models = new ModelConnections(store, modelOptions); backend?.attachModels?.(models); }
   catch (error) { devices.close(); attachments.close(); store.close(); release(); throw error; }
   const sessionTools=new SessionTools(store);
+  const stickers=stickerLibrary??new StickerLibrary(store.db,attachments);
   const activeSession=()=>backend?.status?.().modeBindings?.find(b=>b.mode==='social')?.session_id;
   store.db.exec('CREATE TABLE IF NOT EXISTS chat_spaces(id TEXT PRIMARY KEY,body TEXT NOT NULL)');
   const children=new Map();
-  const spaceRows=()=>store.db.prepare('SELECT body FROM chat_spaces ORDER BY rowid').all().map(r=>JSON.parse(r.body));
+  const deletingSpaces=new Set();
+  const spaceRows=(all=false)=>store.db.prepare('SELECT body FROM chat_spaces ORDER BY rowid').all().map(r=>JSON.parse(r.body)).filter(r=>all||r.deletedAt===undefined);
+  const conversationDeleted=()=>!!store.db.prepare("SELECT 1 FROM settings WHERE key='chat_deleted'").get();
+  function spaceDeleted(id){if(id==='default')return conversationDeleted();const row=spaceRows(true).find(r=>r.id===id);if(!row)return false;if(row.deletedAt!==undefined)return true;const db=new DatabaseSync(path.join(root,'conversations',id,'chat.sqlite'),{readOnly:true});try{return !!db.prepare("SELECT 1 FROM settings WHERE key='chat_deleted'").get();}finally{db.close();}}
   async function openSpace(id){
-    if(!allowChatSpaces||!spaceRows().some(r=>r.id===id))throw fault('CHAT_NOT_FOUND',404);
-    if(!children.has(id)){const job=(async()=>{const childBackend=await backend.openChat(id);try{return {...await startService({dataRoot:path.join(root,'conversations',id),backend:childBackend,now,allowChatSpaces:false}),backend:childBackend};}catch(e){await childBackend.close?.();throw e;}})();children.set(id,job);job.catch(()=>children.delete(id));}
+    if(!allowChatSpaces||!spaceRows(true).some(r=>r.id===id))throw fault('CHAT_NOT_FOUND',404);if(spaceDeleted(id))throw fault('CHAT_DELETED',410);if(deletingSpaces.has(id))throw fault('CHAT_BUSY',409);
+    if(!children.has(id)){const job=(async()=>{const childBackend=await backend.openChat(id);try{return {...await startService({dataRoot:path.join(root,'conversations',id),backend:childBackend,now,allowChatSpaces:false,workspaceBarrier,stickerLibrary:stickers}),backend:childBackend};}catch(e){await childBackend.close?.();throw e;}})();children.set(id,job);job.catch(()=>children.delete(id));}
     return children.get(id);
   }
   function spaceSummary(id,db){const value=JSON.parse(db.prepare("SELECT value FROM settings WHERE key='preferences'").get().value),mode=value.modes.social,persona=value.personas.find(p=>p.id===mode.personaId),last=db.prepare("SELECT text,created_at FROM messages ORDER BY seq DESC LIMIT 1").get();return {id,name:mode.name,personaId:persona?.id??null,personaName:persona?.name??'未指定人格',policy:value.policy,messageCount:db.prepare('SELECT COUNT(*) n FROM messages').get().n,lastMessage:last?.text?.slice(0,100)??'',lastAt:last?.created_at??null};}
-  function listSpaces(){return [spaceSummary('default',store.db),...spaceRows().map(row=>{const db=new DatabaseSync(path.join(root,'conversations',row.id,'chat.sqlite'),{readOnly:true});try{return spaceSummary(row.id,db);}finally{db.close();}})];}
+  function listSpaces(){return [...conversationDeleted()?[]:[spaceSummary('default',store.db)],...spaceRows().filter(row=>!spaceDeleted(row.id)).map(row=>{const db=new DatabaseSync(path.join(root,'conversations',row.id,'chat.sqlite'),{readOnly:true});try{return spaceSummary(row.id,db);}finally{db.close();}})];}
   async function createSpace(value){
     if(!allowChatSpaces||!backend?.openChat)throw fault('MULTI_CHAT_NOT_CONNECTED',409);
     if(!/^[a-f0-9-]{36}$/.test(value.id??'')||typeof value.name!=='string'||!value.name.trim()||value.name.length>80)throw fault('INVALID_CHAT',400);
-    const existing=spaceRows().find(r=>r.id===value.id);if(existing){if(existing.name!==value.name.trim()||existing.personaId!==value.personaId)throw fault('CHAT_ID_REUSED',409);await openSpace(value.id);return {id:value.id};}
+    const existing=spaceRows(true).find(r=>r.id===value.id);if(existing){if(spaceDeleted(value.id))throw fault('CHAT_DELETED',410);if(existing.name!==value.name.trim()||existing.personaId!==value.personaId)throw fault('CHAT_ID_REUSED',409);await openSpace(value.id);return {id:value.id};}
     if(spaceRows().length>=100)throw fault('CHAT_LIMIT',400);
-    const library=preferences.read(),persona=library.personas.find(p=>p.id===value.personaId);if(!persona)throw fault('INVALID_PERSONA',400);
+    const library=preferences.read(),persona=library.personas.find(p=>p.id===value.personaId&&!p.archived);if(!persona)throw fault('INVALID_PERSONA',400);
     const folder=ownRoot(path.join(root,'conversations',value.id)),dbStore=new ChatStore(path.join(folder,'chat.sqlite'),{now});
-    try{new Preferences(dbStore,{personas:library.personas,categories:library.categories,activePersonaId:persona.id,modes:{social:{name:value.name.trim()}}});const profile=new Profiles(dbStore);profile.save('agent',{...profile.read('agent'),nickname:value.name.trim().slice(0,40)});}finally{dbStore.close();}
+    try{new Preferences(dbStore,{personas:library.personas.filter(p=>!p.archived),categories:library.categories,activePersonaId:persona.id,modes:{social:{name:value.name.trim()}}});const profile=new Profiles(dbStore);profile.save('agent',{...profile.read('agent'),nickname:value.name.trim().slice(0,40)});}finally{dbStore.close();}
     store.db.prepare('INSERT INTO chat_spaces VALUES(?,?)').run(value.id,JSON.stringify({id:value.id,name:value.name.trim(),personaId:value.personaId,createdAt:now()}));
     await openSpace(value.id);return {id:value.id};
+  }
+  async function retireConversation(){
+    if(conversationDeleted())return;
+    if(maintenance||voiceSetup||workspaceBarrier.active||backupJob||coordinator.job||workspaceCoordinator?.job)throw fault('CHAT_BUSY',409);
+    retiring=true;maintenance=true;
+    try{
+      const pending=()=>store.db.prepare("SELECT 1 FROM messages WHERE role='user' AND state IN ('queued','running','awaiting_confirmation') UNION ALL SELECT 1 FROM reply_parts WHERE state='queued' LIMIT 1").get();
+      if(pending())throw fault('CHAT_BUSY',409);if(active)await active;if(pending())throw fault('CHAT_BUSY',409);
+      if(backend?.kind==='dsh-bridge'&&!backend.retire)throw fault('CHAT_DELETE_UNAVAILABLE',409);
+      try{await backend?.retire?.();}catch(e){if(['CHAT_BUSY','BACKUP_RUNTIME_BUSY'].includes(e.message))throw fault('CHAT_BUSY',409);throw e;}
+      store.db.prepare("INSERT OR REPLACE INTO settings VALUES('chat_deleted',?)").run(JSON.stringify({deletedAt:now()}));
+    }finally{retiring=false;maintenance=false;}
+  }
+  async function deleteSpace(id,body){
+    if(!allowChatSpaces)throw fault('CHAT_NOT_FOUND',404);
+    const row=spaceRows(true).find(r=>r.id===id);if(id!=='default'&&!row)throw fault('CHAT_NOT_FOUND',404);
+    if(spaceDeleted(id))return {id,deleted:true};if(deletingSpaces.has(id))throw fault('CHAT_BUSY',409);
+    const child=id==='default'?null:await openSpace(id),target=child?.store??store,current=spaceSummary(id,target.db);
+    if(body.name!==current.name)throw fault('CHAT_CHANGED',409);
+    deletingSpaces.add(id);
+    try{await (child?child.retireConversation():retireConversation());if(row)store.db.prepare('UPDATE chat_spaces SET body=? WHERE id=?').run(JSON.stringify({...row,deletedAt:now()}),id);if(child){await child.close();await child.backend.close?.();children.delete(id);}return {id,deleted:true};}finally{deletingSpaces.delete(id);}
   }
   const describe = row => ({ id: row.id, name: row.name, bytes: row.bytes, sha256: row.sha256, mediaType: row.media_type, ...(row.state === 'ready' && row.media_type.startsWith('audio/') ? { durationMs: attachments.audioDuration(row.id) } : {}) });
   // Presentation metadata is projected onto wire responses; original message rows stay byte-for-byte intact.
   const audioDetails = value => {
     if (Array.isArray(value)) return value.map(audioDetails);
-    if (value && Array.isArray(value.attachments) && value.role) return { ...value, attachments: value.attachments.map(file => file.mediaType?.startsWith('audio/') ? { ...file, durationMs: attachments.audioDuration(file.id) } : file) };
+    if (value && Array.isArray(value.attachments) && value.role) return { ...value, ...(value.role === 'assistant' ? { text: stripEmptyThinking(value.text) } : {}), attachments: value.attachments.map(file => file.mediaType?.startsWith('audio/') ? { ...file, durationMs: attachments.audioDuration(file.id) } : file.mediaType?.startsWith('image/')?{...file,...stickers.metadata(file.sha256)}:file) };
     if (value && Array.isArray(value.messages)) return { ...value, messages: audioDetails(value.messages) };
     return value;
   };
   const token = randomBytes(32).toString('hex');
-  let active = null, closed = false, backupJob = null, maintenance = false, closeJob, lastActivity = now(), lastContextCheck = 0;
+  let retiring=false;
+  let active = null, closed = false, backupJob = null, maintenance = false, voiceSetup = false, closeJob, lastActivity = now(), lastContextCheck = 0;
+  let lastReconciledSeq = 0;
   try { backend?.attachDelivery?.({ store, attachments }); }
   catch (error) { devices.close(); attachments.close(); store.close(); release(); throw error; }
   const proactive=createProactiveScheduler({store,backend,preferences,now});
   async function tick() {
-    if (closed || active || maintenance) return;
+    if (closed || active || maintenance || voiceSetup || workspaceBarrier.active || conversationDeleted()) return;
     store.expire();
     if (store.flushReplyParts()) lastActivity = now();
     if (!backend) return;
     active = (async () => {
       try { await backend.flushDeliveries?.(); } catch { /* The DSH outbox retains unacknowledged deliveries. */ }
       if (typeof backend.lookupResult === 'function') {
-        const unknown = store.hydrate(store.db.prepare("SELECT * FROM messages WHERE role='user' AND state='unknown' ORDER BY seq LIMIT 1").get());
+        // Check one receipt per tick, rotating past unresolved or failed lookups.
+        // An old unknown must not starve later requests with durable results.
+        const unknown = store.hydrate(store.db.prepare("SELECT * FROM messages WHERE role='user' AND state='unknown' AND seq>? ORDER BY seq LIMIT 1").get(lastReconciledSeq)
+          ?? store.db.prepare("SELECT * FROM messages WHERE role='user' AND state='unknown' ORDER BY seq LIMIT 1").get());
+        lastReconciledSeq = unknown?.seq ?? 0;
         if (unknown && (!unknown.attachments.length || backend.supportsAttachments === true)) {
           try {
-            const text = await backend.lookupResult(store.workRequest(unknown));
-            if (text !== null) { store.complete(unknown.id, text, unknown.revision); lastActivity = now(); }
+            const request = store.workRequest(unknown);
+            if (request.stopRequestedAt != null) {
+              const receipt = await backend.replyState?.(request);
+              if (['completed','cancelled'].includes(receipt?.state)) store.finishStopped(unknown.id);
+            } else {
+              const text = await backend.lookupResult(request);
+              if (text !== null) { store.complete(unknown.id, text, unknown.revision); lastActivity = now(); }
+            }
           } catch { /* 无法证明完成，继续保留unknown，禁止重跑。 */ }
         }
       }
-      if (maintenance || closed) return;
-      const head = store.db.prepare("SELECT mode FROM messages WHERE mode='social' AND role='user' AND state IN ('queued','awaiting_confirmation','running','unknown') ORDER BY seq LIMIT 1").get();
+      if (maintenance || closed || voiceSetup || workspaceBarrier.active) return;
+      // A completed later chat supersedes old unknown work for scheduling only;
+      // its original receipt remains available for read-only reconciliation.
+      const head = store.db.prepare("SELECT mode FROM messages WHERE mode='social' AND role='user' AND state IN ('queued','awaiting_confirmation','running','unknown') AND (state!='unknown' OR seq>=COALESCE((SELECT MAX(seq) FROM messages WHERE mode='social' AND role='user' AND state='completed'),0)) ORDER BY seq LIMIT 1").get();
+      if (backend.canAccept && store.db.prepare("SELECT 1 FROM messages WHERE mode='social' AND role='user' AND state='queued' LIMIT 1").get() && !await backend.canAccept()) return;
+      if (maintenance || closed || voiceSetup || workspaceBarrier.active) return;
       const request = store.claim({ allowAttachments: backend.supportsAttachments === true, policy: {...preferences.forMode('social'),...(backend?.kind==='dsh-bridge'&&activeSession()?{allowedTools:sessionTools.read(activeSession()).allowedTools,disabledTools:[]}:{})}, mode:'social' });
       if (!request) {
-        if(!head&&!store.db.prepare("SELECT 1 FROM reply_parts WHERE state='queued' LIMIT 1").get())await proactive.tick();
+        if(!head&&!store.db.prepare("SELECT 1 FROM reply_parts WHERE state='queued' LIMIT 1").get()&&(!backend.canAccept||await backend.canAccept({proactive:true})))await proactive.tick();
         if (!head && !store.db.prepare("SELECT 1 FROM reply_parts WHERE state='queued' LIMIT 1").get() && now() - lastContextCheck >= 30000 && now() - lastActivity >= preferences.read().policy.contextIdleSeconds * 1000) {
           lastContextCheck = now(); await backend.maintainContext?.(preferences.read());
         }
@@ -138,7 +184,7 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
       }
       let reply;
       try { reply = await backend.reply(request); store.complete(request.id, reply); lastActivity = now(); }
-      catch { store.unknown(request.id); }
+      catch (error) { if(error.message==='DSH_REPLY_CANCELLED'&&store.workRequest(store.message(request.id)).stopRequestedAt!=null)store.finishStopped(request.id);else store.unknown(request.id); console.warn(JSON.stringify({event:'chatagent_reply_unknown',requestId:request.id,code:/^[A-Z][A-Z0-9_]{1,79}$/.test(error?.message??'')?error.message:error?.name??'Error'})); }
       // Post-reply media failure must never turn a saved text reply into an
       // unknown model turn. Recovery reads text only, never replays media jobs.
       if (reply !== undefined && store.message(request.id).state === 'completed') {
@@ -149,10 +195,12 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
   }
   let coordinator;
   try { coordinator = new BackupCoordinator({ file: path.join(root, 'backup-jobs.json'), capture: localBackup, enabled: automaticBackups, now,
-    isIdle: () => !closed && !active && !maintenance && now() - lastActivity >= backupIdleMs }); }
+    isIdle: () => !closed && !active && !maintenance && !voiceSetup && !workspaceBarrier.active && now() - lastActivity >= backupIdleMs }); }
   catch (error) { devices.close(); attachments.close(); store.close(); release(); throw error; }
   async function localBackup() {
     if (closed) throw fault('SERVICE_CLOSED', 503);
+    if (voiceSetup) throw fault('VOICE_REPLY_BUSY',409);
+    if (workspaceBarrier.active) throw fault('BACKUP_IN_PROGRESS', 503);
     if (backupJob) return backupJob;
     maintenance = true;
     backupJob = (async () => {
@@ -179,7 +227,31 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
     })();
     try { return await backupJob; } finally { backupJob = null; maintenance = false; }
   }
-  const bootstrap = () => ({ chatName:preferences.read().modes.social.name, epoch: store.epoch, mode: store.mode(), modeRevision: store.modeRevision(), modelMode: backend?.externalRuntime ? 'dsh-managed' : backend ? models.read().mode : 'not-connected', backend: backend?.kind==='dsh-bridge' ? 'dsh-bridge' : backend ? 'test-injected' : 'not-connected', attachmentLimit: MAX_ATTACHMENT_BYTES, chunkLimit: MAX_CHUNK_BYTES, mediaModel: backend?.supportsAttachments === true });
+  const workspaceDirectory=path.join(root,'workspace-backups');
+  const idle=()=>!closed&&!active&&!maintenance&&!voiceSetup&&(backend?.backupIdle?.()??true)&&now()-lastActivity>=backupIdleMs;
+  let workspaceIdle=false;
+  const workspaceCoordinator=allowChatSpaces?new BackupCoordinator({file:path.join(root,'workspace-backup-jobs.json'),enabled:workspaceAutomaticBackups,now,isIdle:()=>workspaceIdle&&!workspaceBarrier.active,capture:async()=>{
+    if(closed||maintenance||workspaceBarrier.active)throw fault('BACKUP_IN_PROGRESS',503);
+    workspaceBarrier.active=true;
+    const leases=[];
+    try{
+      const chats=[{id:'default',store,attachments,backend},...await Promise.all(spaceRows().filter(row=>!spaceDeleted(row.id)).map(async row=>({id:row.id,...await openSpace(row.id)})))];
+      if(active)await active;
+      if(voiceSetup)await voiceSetup;
+      for(const chat of chats.slice(1))await chat.waitForIdle();
+      workspaceBarrier.capturing=true;
+      fs.mkdirSync(workspaceDirectory,{recursive:true});
+      if(backend?.kind==='dsh-bridge')for(const chat of chats){chat.native=await chat.backend.beginBackup();leases.push({backend:chat.backend,lease:chat.native.lease});}
+      const manifest=await captureWorkspaceBackup({chats,destination:path.join(workspaceDirectory,randomUUID()),now,finishNative:async()=>{for(const item of leases){await item.backend.endBackup(item.lease,true);item.done=true;}}});
+      // Retention failures are visible, without misreporting a valid new backup
+      // as absent. The next successful capture retries the same cleanup.
+      workspaceBarrier.capturing=false;workspaceBarrier.active=false;
+      try{await pruneDailyBackupsAsync(root,now(),manifest.id);}catch(error){manifest.retentionWarning=/^[A-Z_]+$/.test(error.message)?error.message:'BACKUP_RETENTION_FAILED';}
+      return manifest;
+    }finally{for(const item of leases)if(!item.done)await item.backend.endBackup(item.lease,false).catch(()=>{});workspaceBarrier.capturing=false;workspaceBarrier.active=false;}
+  }}):null;
+  const workspaceStatus=()=>({...workspaceCoordinator.status(),coverage:backend?.kind==='dsh-bridge'?completeWorkspaceCoverage:workspaceCoverage,excluded:backend?.kind==='dsh-bridge'?completeWorkspaceExcluded:workspaceExcluded,directory:workspaceDirectory,retention:{days:7,perDay:1,migrationProtected:true},daily:listDailyBackups(root),chats:listSpaces().map(({id,name,messageCount})=>({id,name,messageCount}))});
+  const bootstrap = () => ({ chatName:preferences.read().modes.social.name, epoch: store.epoch, mode: store.mode(), modeRevision: store.modeRevision(), modelMode: backend?.externalRuntime ? 'dsh-managed' : backend ? models.read().mode : 'not-connected', backend: backend?.kind==='dsh-bridge' ? 'dsh-bridge' : backend ? 'test-injected' : 'not-connected', attachmentLimit: MAX_ATTACHMENT_BYTES, chunkLimit: MAX_CHUNK_BYTES, mediaModel: backend?.supportsAttachments === true, voiceReplies:typeof backend?.voiceReplies==='function' });
   const handler = deviceOnly => async (req, res) => {
     const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
       'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" };
@@ -189,13 +261,23 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
       const standardTlsHost = deviceOnly && deviceTls && deviceServer.address().port === 443 && req.headers.host === deviceHostname;
       if (req.headers.host !== host && !standardTlsHost || (req.headers.origin && (deviceOnly || req.headers.origin !== origin)) || req.headers['sec-fetch-site'] === 'cross-site') throw fault('ORIGIN_REFUSED', 403);
       const url = new URL(req.url, origin), route = url.pathname;
+      if(!deviceOnly&&req.method==='GET'&&route==='/'&&(url.searchParams.get('chat')?spaceDeleted(url.searchParams.get('chat')):conversationDeleted())){res.writeHead(302,{...headers,Location:'/chats'});return res.end();}
       const scopedRoute=/^\/v1\/chats\/([a-f0-9-]{36})\/(v1\/.*)$/.exec(route);
       const assets = { '/overview': ['overview.html', 'text/html; charset=utf-8'], '/overview.js': ['overview.js', 'text/javascript; charset=utf-8'], '/shell.js': ['shell.js', 'text/javascript; charset=utf-8'], '/desktop.css': ['desktop.css', 'text/css; charset=utf-8'], '/whale.svg': ['whale.svg', 'image/svg+xml'], '/archive': ['archive.html', 'text/html; charset=utf-8'], '/archive.js': ['archive.js', 'text/javascript; charset=utf-8'], '/': ['index.html', 'text/html; charset=utf-8'], '/devices': ['devices.html', 'text/html; charset=utf-8'], '/devices.js': ['devices.js', 'text/javascript; charset=utf-8'], '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
         '/manage': ['manage.html', 'text/html; charset=utf-8'], '/manage.js': ['manage.js', 'text/javascript; charset=utf-8'], '/style.css': ['style.css', 'text/css; charset=utf-8'], '/outbox.js': ['outbox.js', 'text/javascript; charset=utf-8'], '/message-presentation.js': ['message-presentation.js', 'text/javascript; charset=utf-8'], '/sw.js': ['sw.js', 'text/javascript; charset=utf-8'] };
       for(const name of ['customize.html','customize.js','customize.css'])assets[name==='customize.html'?'/customize':'/'+name]=[name,name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8'];
       assets['/appearance-values.js']=['../../packages/conversation/appearance.mjs','text/javascript; charset=utf-8'];
+      assets['/packages/conversation/reply-control.mjs']=['../../packages/conversation/reply-control.mjs','text/javascript; charset=utf-8'];
       assets['/appearance.js']=['appearance.js','text/javascript; charset=utf-8'];
-      const settingsViews={appearance:'customize.html',data:'customize.html',workspace:'customize.html',reply:'manage.html',personas:'manage.html',sessions:'manage.html',profiles:'profiles.html',models:'models.html',devices:'devices.html'};
+      const settingsViews={appearance:'customize.html',data:'customize.html',workspace:'customize.html',reply:'manage.html',personas:'manage.html',sessions:'manage.html',profiles:'profiles.html',models:'models.html',voice:'voice-replies.html',devices:'devices.html'};
+      assets['/voice-replies.js']=['voice-replies.js','text/javascript; charset=utf-8'];
+      assets['/voice-replies.css']=['voice-replies.css','text/css; charset=utf-8'];
+      assets['/speech-guide']=['speech-guide.html','text/html; charset=utf-8'];
+      assets['/installed-start']=['installed-start.html','text/html; charset=utf-8'];
+      assets['/speech-guide.js']=['speech-guide.js','text/javascript; charset=utf-8'];
+      assets['/speech-agent-prompts.js']=['speech-agent-prompts.js','text/javascript; charset=utf-8'];
+      assets['/speech-guide.css']=['speech-guide.css','text/css; charset=utf-8'];
+      assets['/apps/branding/app-icon.png']=['../branding/app-icon.png','image/png'];
       const settingsSection=url.searchParams.get('section')??'appearance';
       assets['/settings']=[Object.hasOwn(settingsViews,settingsSection)?settingsViews[settingsSection]:'customize.html','text/html; charset=utf-8'];
       assets['/chats']=['chats.html','text/html; charset=utf-8'];
@@ -205,6 +287,9 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
       assets['/capability-cards.js']=['capability-cards.js','text/javascript; charset=utf-8'];
       assets['/manage.css'] = ['manage.css', 'text/css; charset=utf-8'];
       assets['/models'] = ['models.html', 'text/html; charset=utf-8'];
+      assets['/media-connections.js']=['media-connections.js','text/javascript; charset=utf-8'];
+      assets['/image-attachments.js']=['image-attachments.js','text/javascript; charset=utf-8'];
+      assets['/stickers.js']=['stickers.js','text/javascript; charset=utf-8'];assets['/stickers.css']=['stickers.css','text/css; charset=utf-8'];
       assets['/models.js'] = ['models.js', 'text/javascript; charset=utf-8'];
       assets['/regions.json']=['regions.json','application/json; charset=utf-8'];
       assets['/region-picker.js']=['region-picker.js','text/javascript; charset=utf-8'];
@@ -219,22 +304,24 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
       else if (req.headers['x-chatagent-token'] !== token) throw fault('AUTH_REQUIRED', 401);
       // 独立入口不给出管理员token、网页或管理接口；新增接口默认不可从设备入口访问。
       const deviceRoute=scopedRoute?'/'+scopedRoute[2]:route;
-      const allowedDeviceRoute = req.method === 'GET' && ['/v1/chats','/v1/bootstrap', '/v1/messages', '/v1/messages/lookup', '/v1/sync', '/v1/cache', '/v1/profiles', '/v1/timeline'].includes(deviceRoute) ||
+      const allowedDeviceRoute = ['GET','POST'].includes(req.method)&&deviceRoute==='/v1/stickers'||req.method==='GET'&&/^\/v1\/stickers\/[a-f0-9-]{36}\/content$/.test(deviceRoute)||req.method==='POST'&&/^\/v1\/stickers\/[a-f0-9-]{36}\/use$/.test(deviceRoute)||req.method === 'GET' && ['/v1/activity','/v1/chats','/v1/bootstrap', '/v1/messages', '/v1/messages/lookup', '/v1/sync', '/v1/cache', '/v1/profiles', '/v1/timeline'].includes(deviceRoute) ||
         req.method === 'POST' && deviceRoute === '/v1/profiles/self' ||
-        req.method === 'POST' && ['/v1/pairing/claim', '/v1/messages', '/v1/mode', '/v1/attachments'].includes(deviceRoute) ||
+        req.method === 'POST' && ['/v1/activity/stop','/v1/pairing/claim', '/v1/messages', '/v1/mode', '/v1/attachments'].includes(deviceRoute) ||
         req.method === 'POST' && /^\/v1\/messages\/[a-f0-9-]+\/decision$/.test(deviceRoute) ||
         req.method === 'GET' && /^\/v1\/attachments\/[a-f0-9-]{36}(?:\/content)?$/.test(deviceRoute) ||
         req.method === 'PUT' && /^\/v1\/attachments\/[a-f0-9-]{36}\/content$/.test(deviceRoute) ||
         req.method === 'POST' && /^\/v1\/attachments\/[a-f0-9-]{36}\/complete$/.test(deviceRoute) ||
         ['GET','POST'].includes(req.method) && /^\/v1\/attachments\/[a-f0-9-]{36}\/transcription$/.test(deviceRoute);
       if (deviceOnly && !allowedDeviceRoute) throw fault('DEVICE_SCOPE_REFUSED', 403);
+      if(workspaceBarrier.active&&req.method!=='GET'&&(deviceRoute!=='/v1/activity/stop'||workspaceBarrier.capturing))throw fault('BACKUP_IN_PROGRESS',503);
       if(req.method==='GET'&&route==='/v1/chats'){const chats=listSpaces();return send(200,{chats:deviceOnly?chats.map(({policy,...r})=>r):chats,canCreate:!deviceOnly&&!!backend?.openChat});}
+      if(retiring&&req.method!=='GET')throw fault('CHAT_BUSY',409);
       if(scopedRoute){
         if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);
-        const inner='/'+scopedRoute[2];if(!/^\/v1\/(?:bootstrap|messages|sync|cache|profiles|timeline|mode|attachments|preferences|chat-settings|conversation-status|reply-parts|dsh|plugins|backups|companion)(?:\/|$)/.test(inner))throw fault('CHAT_ROUTE_REFUSED',403);
+        const inner='/'+scopedRoute[2];if(!/^\/v1\/(?:activity|bootstrap|messages|sync|cache|profiles|timeline|mode|attachments|stickers|preferences|chat-settings|conversation-status|reply-parts|dsh|plugins|backups|companion|voice-replies)(?:\/|$)/.test(inner)||deviceOnly&&inner.startsWith('/v1/voice-replies'))throw fault('CHAT_ROUTE_REFUSED',403);
         let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>MAX_CHUNK_BYTES+32768)throw fault('BODY_TOO_LARGE',413);chunks.push(chunk);}let bytes=Buffer.concat(chunks);
         if(deviceOnly){device=authenticate();if(inner==='/v1/messages'&&req.method==='POST'){let value;try{value=JSON.parse(bytes);}catch{throw fault('INVALID_JSON',400);}if(value.deviceId!==undefined&&value.deviceId!==device.deviceId)throw fault('DEVICE_ID_MISMATCH',403);value.deviceId=device.deviceId;bytes=Buffer.from(JSON.stringify(value));}if(inner==='/v1/messages/lookup'){if(url.searchParams.has('deviceId')&&url.searchParams.get('deviceId')!==device.deviceId)throw fault('DEVICE_ID_MISMATCH',403);url.searchParams.set('deviceId',device.deviceId);}}
-        const child=await openSpace(scopedRoute[1]),response=await fetch(child.url+inner+url.search,{method:req.method,headers:{'X-Chatagent-Token':child.adminToken,...req.headers['content-type']?{'Content-Type':req.headers['content-type']} :{}},...['GET','HEAD'].includes(req.method)?{}:{body:bytes},signal:AbortSignal.timeout(20000)});
+        const child=await openSpace(scopedRoute[1]),response=await fetch(child.url+inner+url.search,{method:req.method,headers:{'X-Chatagent-Token':child.adminToken,...req.headers['content-type']?{'Content-Type':req.headers['content-type']} :{}},...['GET','HEAD'].includes(req.method)?{}:{body:bytes},signal:AbortSignal.timeout(inner==='/v1/voice-replies/setup'?1200000:inner.startsWith('/v1/voice-replies')?70000:20000)});
         const type=response.headers.get('content-type')??'application/octet-stream';
         if(type.includes('application/json')){const value=await response.json();if(inner==='/v1/bootstrap'){delete value.token;if(!deviceOnly)value.token=token;else Object.assign(value,device);}return send(response.status,value,type);}
         for(const key of ['Content-Disposition','X-Content-SHA256'])if(response.headers.has(key))headers[key]=response.headers.get(key);return send(response.status,Buffer.from(await response.arrayBuffer()),type);
@@ -269,7 +356,7 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
         for await (const chunk of req) { size += chunk.length; if (size > MAX_CHUNK_BYTES) throw fault('BODY_TOO_LARGE', 413); chunks.push(chunk); }
         if (deviceOnly) authenticate();
         lastActivity = now();
-        if (maintenance || closed) throw fault('BACKUP_IN_PROGRESS', 503);
+        if (maintenance || closed || workspaceBarrier.active) throw fault('BACKUP_IN_PROGRESS', 503);
         const row = attachments.write(attachmentRoute[1], Number(url.searchParams.get('offset')), Buffer.concat(chunks));
         return send(200, { ...describe(row), offset: row.offset, state: row.state });
       }
@@ -295,7 +382,32 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
       if (closed) throw fault('SERVICE_CLOSED', 503);
       if (pairingClaim) return send(200, devices.claim(body));
       if (deviceOnly) device = authenticate(); // 读请求体期间可能已被电脑撤销。
+      if(workspaceBarrier.active&&req.method!=='GET'&&(route!=='/v1/activity/stop'||workspaceBarrier.capturing))throw fault('BACKUP_IN_PROGRESS',503);
+      if(conversationDeleted()&&/^\/v1\/(?:activity|messages|sync|cache|profiles|timeline|mode|attachments|chat-settings|reply-parts|dsh|plugins|voice-replies)(?:\/|$)/.test(route))throw fault('CHAT_DELETED',410);
       if (req.method === 'POST') lastActivity = now();
+      if(route==='/v1/stickers'&&req.method==='GET')return send(200,stickers.find({query:url.searchParams.get('query')??'',offset:Number(url.searchParams.get('offset')??0),limit:Number(url.searchParams.get('limit')??80)}));
+      if(route==='/v1/stickers'&&req.method==='POST'){if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);return send(200,stickers.add(attachments.verify(body.attachmentId),{caption:body.caption??'',source:'import'}));}
+      const stickerRoute=/^\/v1\/stickers\/([a-f0-9-]{36})\/(content|use)$/.exec(route);
+      if(stickerRoute&&stickerRoute[2]==='content'&&req.method==='GET'){const item=stickers.get(stickerRoute[1]),file=stickers.attachments.verify(item.id);headers['X-Content-SHA256']=file.sha256;return send(200,fs.readFileSync(file.file),file.media_type);}
+      if(stickerRoute&&stickerRoute[2]==='use'&&req.method==='POST'){if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);return send(200,stickers.use(stickerRoute[1],attachments));}
+      if(req.method==='GET'&&route==='/v1/activity')return send(200,store.activity(typeof backend?.stopReply==='function'));
+      if(req.method==='POST'&&route==='/v1/activity/stop'){
+        const current=store.message(body.requestId);
+        if(current?.state!=='completed'&&typeof backend?.stopReply!=='function')throw fault('STOP_UNAVAILABLE',409);
+        const stop=store.requestStop(body.requestId,body.revision);
+        if(!stop.partsOnly){
+          try{const receipt=await backend.stopReply(stop.request);if(!workspaceBarrier.capturing&&['completed','cancelled'].includes(receipt?.state)&&!receipt.requested)store.finishStopped(stop.request.id);}
+          catch{if(!workspaceBarrier.capturing)store.unknown(stop.request.id);}
+        }
+        return send(200,store.activity(typeof backend?.stopReply==='function'));
+      }
+      if(workspaceCoordinator&&!deviceOnly&&req.method==='GET'&&route==='/v1/backups/workspace/status')return send(200,workspaceStatus());
+      if(workspaceCoordinator&&!deviceOnly&&req.method==='POST'&&route==='/v1/backups/workspace/settings'){if(typeof body.enabled!=='boolean')throw fault('INVALID_BACKUP_OPTIONS',400);workspaceCoordinator.configure(body.enabled);return send(200,workspaceStatus());}
+      if(workspaceCoordinator&&!deviceOnly&&req.method==='POST'&&route==='/v1/backups/workspace')return send(200,{...await workspaceCoordinator.request(),directory:workspaceDirectory});
+      const deleteChat=/^\/v1\/chats\/(default|[a-f0-9-]{36})\/delete$/.exec(route);
+      if(!deviceOnly&&req.method==='POST'&&deleteChat)return send(200,await deleteSpace(deleteChat[1],body));
+      if(retiring&&req.method==='POST')throw fault('CHAT_BUSY',409);
+      if(conversationDeleted()&&req.method==='POST'&&/^\/v1\/(?:messages|mode|attachments|chat-settings|profiles|voice-replies|plugins)(?:\/|$)/.test(route))throw fault('CHAT_DELETED',410);
       if(!deviceOnly&&req.method==='POST'&&route==='/v1/chats'){if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);return send(200,await createSpace(body));}
       if(!deviceOnly&&req.method==='POST'&&diyRoute){if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);if(!backend?.pluginAction)throw fault('PLUGIN_NOT_CONNECTED',409);try{return send(200,await backend.pluginAction(diyRoute[1],diyRoute[2],body));}catch(e){if(/^PLUGIN_[A-Z_]+$/.test(e.message))throw fault(e.message,409);throw e;}}
       if(req.method==='GET' && route==='/v1/timeline')return send(200,timelinePage(store,portable,backend?.historyRecords?.()??[],url.searchParams));
@@ -320,6 +432,33 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
       if(req.method==='GET' && route==='/v1/profiles')return send(200,profiles.list(url.searchParams.get('after')));
       const profileRoute=/^\/v1\/profiles\/(self|agent)$/.exec(route);
       if(req.method==='POST' && profileRoute){if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);return send(200,profiles.save(profileRoute[1],body));}
+      if(!deviceOnly&&req.method==='POST'&&route==='/v1/media-connections/test'){if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);if(!backend?.probeMediaConnections)throw fault('MEDIA_CONFIG_UNAVAILABLE',409);try{return send(200,await backend.probeMediaConnections(body));}catch(e){if(/^(MEDIA_|MODEL_)/.test(e.message))throw fault(e.message,409);throw e;}}
+      if(!deviceOnly&&route==='/v1/media-connections'){
+        if(!backend?.mediaConnections)throw fault('MEDIA_CONFIG_UNAVAILABLE',409);
+        if(req.method==='GET')return send(200,await backend.mediaConnections());
+        if(req.method==='POST'){if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);try{return send(200,await backend.saveMediaConnections(body));}catch(e){if(/^(MEDIA_|MODEL_)/.test(e.message))throw fault(e.message,409);throw e;}}
+      }
+      if(!deviceOnly&&route.startsWith('/v1/voice-replies')){
+        const sessionId=activeSession();if(!sessionId||!backend?.voiceReplies)throw fault('VOICE_REPLY_UNAVAILABLE',409);
+        const view=async()=>({...await backend.voiceReplies(),...sessionTools.read(sessionId)});
+        if(req.method==='GET'&&route==='/v1/voice-replies')return send(200,await view());
+        if(req.method==='POST'&&['/v1/voice-replies/setup','/v1/voice-replies/preview'].includes(route)){
+          if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);
+          if(typeof backend.setupVoiceReplies!=='function'||typeof backend.previewVoiceReplies!=='function')throw fault('VOICE_REPLY_UNAVAILABLE',409);
+          if(active||voiceSetup)throw fault('VOICE_REPLY_BUSY',409);
+          if(body.sessionId!==sessionId||body.revision!==sessionTools.read(sessionId).revision)throw fault('VOICE_REPLY_SETTINGS_CHANGED',409);
+          let finish;voiceSetup=new Promise(resolve=>finish=resolve);
+          try{
+            if(route.endsWith('/preview'))return send(200,await backend.previewVoiceReplies());
+            const selectingSong=body.singingVoice!==undefined;
+            await backend.setupVoiceReplies(selectingSong?{singingVoice:body.singingVoice}:{source:body.source});
+            const current=sessionTools.read(sessionId);
+            const tool=selectingSong?'chatagent_singing__control':'chatagent_send_voice';
+            if(!current.allowedTools.includes(tool))sessionTools.save({...current,allowedTools:[...current.allowedTools,tool]});
+            return send(200,await view());
+          }catch(e){if(/^(VOICE_REPLY_|ASR_SETUP_)/.test(e.message))throw fault(e.message,409);throw e;}finally{voiceSetup=false;finish();}
+        }
+      }
       if (!deviceOnly && req.method === 'GET' && route === '/v1/models') return send(200, backend?.externalRuntime ? {managedBy:'dsh'} : models.read());
       if (!deviceOnly && req.method === 'POST' && route === '/v1/models') {
         if (maintenance) throw fault('BACKUP_IN_PROGRESS', 503);
@@ -333,7 +472,7 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
       }
       if(!deviceOnly&&route==='/v1/chat-settings'&&['GET','POST'].includes(req.method)){
         const sessionId=activeSession();if(!sessionId)throw fault('SESSION_NOT_CONNECTED',409);
-        if(req.method==='POST'){if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);if(body.sessionId!==sessionId)throw fault('SESSION_CHANGED',409);return send(200,body.preferences?store.transaction(()=>({...sessionTools.save(body,false),preferences:preferences.save(body.preferences,false)})):sessionTools.save(body));}
+        if(req.method==='POST'){if(maintenance)throw fault('BACKUP_IN_PROGRESS',503);if(voiceSetup)throw fault('VOICE_REPLY_BUSY',409);if(body.sessionId!==sessionId)throw fault('SESSION_CHANGED',409);return send(200,body.preferences?store.transaction(()=>({...sessionTools.save(body,false),preferences:preferences.save(body.preferences,false)})):sessionTools.save(body));}
         return send(200,{...sessionTools.read(sessionId),name:preferences.read().modes.social.name,preferences:preferences.read(),tools:(await backend?.bridgeStatus?.())?.tools??[]});
       }
       if (!deviceOnly && req.method === 'GET' && route === '/v1/preferences') return send(200, preferences.read());
@@ -378,9 +517,7 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
         const ids = body.attachmentIds ?? [];
         if (!Array.isArray(ids) || ids.length > 8 || new Set(ids).size !== ids.length || Object.hasOwn(body, 'attachments')) throw fault('INVALID_ATTACHMENTS', 400);
         const submitted = store.submit({ ...body, attachments: ids.map(id => describe(attachments.verify(id))) });
-        if (!known && submitted.state === 'queued' && !ids.length && body.text.trim() === '停止分段') {
-          store.stopSplittingCommand(submitted.id);
-        }
+
         return send(200, store.message(submitted.id));
       }
       if (req.method === 'GET' && route === '/v1/messages/lookup') {
@@ -401,7 +538,7 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
         return send(200, { mode: store.setMode(body.mode), modeRevision: store.modeRevision() });
       }
       if (req.method === 'GET' && route === '/v1/backups/status') return send(200, coordinator.status());
-      if (req.method === 'POST' && route === '/v1/backups') return send(200, await coordinator.request());
+      if (req.method === 'POST' && route === '/v1/backups') return send(200, await (workspaceCoordinator&&backend?.kind==='dsh-bridge'?workspaceCoordinator:coordinator).request());
       if (req.method === 'POST' && route === '/v1/backups/pin') { coordinator.pin(body.id, body.pinned); return send(200, coordinator.status()); }
       throw fault('NOT_FOUND', 404);
     } catch (error) {
@@ -419,13 +556,16 @@ export async function startService({ dataRoot, port = 0, devicePort, deviceTls, 
   const stopListener = async listener => { if (listener?.listening) { listener.closeAllConnections(); await new Promise(resolve => listener.close(resolve)); } };
   try { await listen(server, port); if (deviceServer) await listen(deviceServer, devicePort, deviceHost); }
   catch (error) { await stopListener(deviceServer); await stopListener(server); devices.close(); attachments.close(); store.close(); release(); throw error; }
-  const timer = setInterval(() => { void tick().catch(() => {}); void coordinator.tick().catch(() => {}); }, 1000); timer.unref();
-  if(allowChatSpaces&&backend?.openChat)for(const row of spaceRows())void openSpace(row.id).catch(()=>{});
-  return { adminToken:token,url: `http://127.0.0.1:${server.address().port}`, deviceUrl: deviceServer ? `${deviceTls ? 'https' : 'http'}://${deviceHostname}:${deviceServer.address().port}` : null, root, store, attachments, tick, backup: () => coordinator.request(), backupStatus: () => coordinator.status(),
+  let checkingWorkspace=false;
+  const workspaceBackupTick=async()=>{if(!workspaceCoordinator||checkingWorkspace)return;checkingWorkspace=true;try{workspaceIdle=idle()&&(await Promise.all([...children.values()].map(async job=>(await job).isIdle()))).every(Boolean);await workspaceCoordinator.tick();}finally{checkingWorkspace=false;}};
+  const timer = setInterval(() => { void workspaceBackupTick().catch(()=>{}); void coordinator.tick().catch(() => {}); void tick().catch(() => {}); }, 1000); timer.unref();
+  if(allowChatSpaces&&backend?.openChat)for(const row of spaceRows().filter(row=>!spaceDeleted(row.id)))void openSpace(row.id).catch(()=>{});
+  return { adminToken:token,url: `http://127.0.0.1:${server.address().port}`, deviceUrl: deviceServer ? `${deviceTls ? 'https' : 'http'}://${deviceHostname}:${deviceServer.address().port}` : null, root, store, attachments, stickers, tick, backup: () => coordinator.request(), backupStatus: () => coordinator.status(),
+    retireConversation,isIdle:idle, waitForIdle:async()=>{if(active)await active;if(voiceSetup)await voiceSetup;if(coordinator.job)await coordinator.job.catch(()=>{});if(backupJob)await backupJob.catch(()=>{});}, workspaceBackup:()=>workspaceCoordinator.request(),
     close() {
       closed = true; clearInterval(timer);
       return closeJob ??= (async () => { await stopListener(deviceServer); await stopListener(server);
-        if (active) await active; if (coordinator.job) await coordinator.job.catch(() => {}); if (backupJob) await backupJob.catch(() => {});await Promise.allSettled([...children.values()].map(async job=>{const child=await job;await child.close();await child.backend.close?.();})); devices.close(); attachments.close(); store.close(); release(); })();
+        if (active) await active; if (voiceSetup) await voiceSetup; if (workspaceCoordinator?.job) await workspaceCoordinator.job.catch(()=>{}); if (coordinator.job) await coordinator.job.catch(() => {}); if (backupJob) await backupJob.catch(() => {});await Promise.allSettled([...children.values()].map(async job=>{const child=await job;await child.close();await child.backend.close?.();})); devices.close(); attachments.close(); store.close(); release(); })();
     } };
 }
 

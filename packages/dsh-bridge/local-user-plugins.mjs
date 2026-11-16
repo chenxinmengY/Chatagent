@@ -10,7 +10,10 @@ export async function connectLocalUserPlugins({agent,root,publish,lookup,profile
  const {ReminderStore}=await load('plugins/daily-reminders/lib/store.mjs'),{ReminderScheduler}=await load('plugins/daily-reminders/lib/scheduler.mjs');
  let closed=false,context='';
  const turn=()=>({conversationKey:capsule.key,conversationName:profile()?.name??'Chatagent',sessionId:agent.session.id,replies:[],toolCalls:0,modelCalls:0,networkOptOut:true});
- const runtime=new PluginRuntime({root,accountScope:capsule.account,now,isAllowed:()=>!closed,canSchedule:()=>false,personaFor:()=>({persona:profile()?.persona?.text??'',personaName:profile()?.persona?.name??'Chatagent'}),fetchText:async()=>{throw Error('LOCAL_PLUGIN_NETWORK_DISABLED');}});
+ const runtime=new PluginRuntime({root,accountScope:capsule.account,now,isAllowed:()=>!closed&&!profile()?.deleted,canSchedule:()=>false,personaFor:()=>({persona:profile()?.persona?.text??'',personaName:profile()?.persona?.name??'Chatagent'}),fetchText:async()=>{throw Error('LOCAL_PLUGIN_NETWORK_DISABLED');}});
+ // This copied plugin remembers the last query for on-demand details. Keep
+ // that storage and its tools, but omit its automatic context hook on every load.
+ const sync=runtime.sync.bind(runtime);runtime.sync=async()=>{await sync();const record=runtime.records.get('course-query');if(record?.process?.hooks)record.process.hooks=record.process.hooks.filter(name=>name!=='before-context');};
  const timetable=createCourseTimetable({root,busy:()=>agent.status!=='idle',reload:async()=>{runtime.dirty=true;await runtime.sync();if(!runtime.isActive('course-query',capsule.key))throw Error('PLUGIN_TIMETABLE_RELOAD_FAILED');}});
  const active=runtime.active.bind(runtime);runtime.active=(record,key,permission)=>profile()?.capabilities?.find(p=>p.id===record.id)?.values.enabled!==false&&active(record,key,permission);
  await runtime.sync();const disposers=[];
@@ -22,7 +25,7 @@ export async function connectLocalUserPlugins({agent,root,publish,lookup,profile
  disposers.push(agent.ctx.systemPrompt.context({name:'chatagent:local-user-plugins',required:true,order:890,interpolate:false,text:()=>context}));
  const store=new ReminderStore(root,capsule.account),statusFile=path.join(root,'state/reminders/host-status.json');
  const heartbeat=()=>fs.writeFileSync(statusFile,JSON.stringify({online:!closed,account:capsule.account,at:now(),destination:'chatagent'}));
- const scheduler=new ReminderScheduler({store,now,allowed:key=>!closed&&capsule.remindersEnabled&&profile()?.capabilities?.find(p=>p.id==='daily-reminders')?.values.enabled!==false&&profile()?.toolGrants?.[agent.session.id]?.includes('daily-reminders__manage')&&key===capsule.key,ready:()=>!closed,send:async batch=>{const deliveryId='reminder-'+batch.id;publish({deliveryId,text:batch.text});if(!lookup(deliveryId))throw Error('LOCAL_DELIVERY_UNPROVEN');return {confirmed:true,delivered:'database-confirmed',deviceReceived:false};}});
+ const scheduler=new ReminderScheduler({store,now,allowed:key=>!closed&&!profile()?.deleted&&capsule.remindersEnabled&&profile()?.capabilities?.find(p=>p.id==='daily-reminders')?.values.enabled!==false&&profile()?.toolGrants?.[agent.session.id]?.includes('daily-reminders__manage')&&key===capsule.key,ready:()=>!closed,send:async batch=>{const deliveryId='reminder-'+batch.id;publish({deliveryId,text:batch.text});if(!lookup(deliveryId))throw Error('LOCAL_DELIVERY_UNPROVEN');return {confirmed:true,delivered:'database-confirmed',deviceReceived:false};}});
  heartbeat();const timer=setInterval(()=>{heartbeat();void scheduler.tick();},5000);timer.unref?.();
  return {runtime,timetable,async close(){closed=true;clearInterval(timer);heartbeat();await scheduler.close();await runtime.dispose();for(const dispose of disposers)dispose();}};
 }

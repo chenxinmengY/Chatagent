@@ -1,0 +1,10 @@
+{
+  "id": "course-query",
+  "name": "课表查询",
+  "version": "1.0.0",
+  "apiVersion": 2,
+  "host": "wechatagent",
+  "description": "用户询问时按真实北京时间查询课程、教室和任课教师，支持课程追问。个人课表仅在授权聊天中提供，无主动提醒。",
+  "permissions": ["storage"],
+  "requiresAccount": true
+}
